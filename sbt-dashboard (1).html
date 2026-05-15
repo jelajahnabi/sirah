@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sirah-Based Tour Leader Training</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#080706;--deep:#0f0e0b;--surface:#161410;--panel:#1e1b14;--card:#242019;
+  --gold:#C9A84C;--gold-b:#E8C96A;--gold-p:#F0DCA0;--gold-d:#6B5620;--gold-dim:#3a2e12;
+  --cream:#F5EDD3;--maroon:#6B1F1F;--maroon-l:#9B3030;
+  --olive:#3A4828;--olive-l:#5A7040;--teal:#1A3A38;--teal-l:#2A6058;
+  --muted:#8A7D5A;--subtle:#4A4030;
+  --border:rgba(201,168,76,0.13);--border-b:rgba(201,168,76,0.38);
+  --r:5px;--r2:12px;--tr:all 0.3s cubic-bezier(.4,0,.2,1);--sh:0 20px 60px rgba(0,0,0,0.7);
+}
+html{scroll-behavior:smooth;}
+body{font-family:'Georgia','Times New Roman',serif;background:var(--ink);color:var(--cream);min-height:100vh;overflow-x:hidden;}
+.bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 70% 55% at 12% 18%,rgba(201,168,76,0.04) 0%,transparent 65%),radial-gradient(ellipse 50% 45% at 88% 82%,rgba(107,31,31,0.07) 0%,transparent 60%);}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.022;background-image:linear-gradient(rgba(201,168,76,1) 1px,transparent 1px),linear-gradient(90deg,rgba(201,168,76,1) 1px,transparent 1px);background-size:72px 72px;}
+.bg-orn{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden;}
+.bg-orn::before{content:'';position:absolute;top:-100px;right:-100px;width:440px;height:440px;border-radius:50%;border:1px solid rgba(201,168,76,0.055);box-shadow:inset 0 0 0 28px rgba(201,168,76,0.02);}
+.bg-orn::after{content:'';position:absolute;bottom:-70px;left:-70px;width:320px;height:320px;border-radius:50%;border:1px solid rgba(107,31,31,0.07);}
+#app{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 22px 80px;}
+/* TOPBAR */
+#topbar{display:flex;align-items:center;justify-content:flex-end;padding:14px 0;gap:7px;flex-wrap:wrap;}
+.tb-btn{display:inline-flex;align-items:center;gap:5px;padding:5px 13px;border-radius:var(--r);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:var(--tr);font-family:inherit;white-space:nowrap;}
+.tb-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.06);}
+.tb-btn.active{border-color:var(--gold);color:var(--gold-b);background:rgba(201,168,76,0.1);}
+.tb-save{border-color:var(--olive-l);color:var(--olive-l);background:rgba(58,72,40,0.14);}
+.tb-save:hover{background:rgba(58,72,40,0.28);border-color:#8fba6a;color:#8fba6a;}
+.tb-reset{border-color:var(--maroon);color:rgba(200,140,140,0.65);}
+.tb-reset:hover{border-color:var(--maroon-l);color:#e07070;background:rgba(107,31,31,0.15);}
+/* HERO */
+#hero{text-align:center;padding:48px 0 36px;position:relative;}
+.h-eyebrow-wrap{display:inline-flex;align-items:center;gap:14px;margin-bottom:18px;}
+.h-line{width:44px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-d));}
+.h-line.r{background:linear-gradient(90deg,var(--gold-d),transparent);}
+.h-eyebrow{font-size:9px;font-weight:700;letter-spacing:4px;color:var(--gold);text-transform:uppercase;}
+.h-sym{font-size:30px;display:block;margin-bottom:14px;}
+.h-title{font-size:clamp(24px,5.5vw,48px);font-weight:700;color:var(--cream);line-height:1.1;letter-spacing:-0.5px;margin-bottom:9px;}
+.h-title em{color:var(--gold-b);font-style:italic;}
+.h-sub{font-size:12px;color:var(--muted);letter-spacing:3.5px;text-transform:uppercase;margin-bottom:24px;}
+.h-divider{width:72px;height:1px;background:linear-gradient(90deg,transparent,var(--gold-d),transparent);margin:0 auto;}
+.h-edit-btn{display:none;margin:13px auto 0;padding:5px 16px;border-radius:100px;border:1px solid var(--gold-dim);background:transparent;color:var(--gold-d);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;cursor:pointer;transition:var(--tr);font-family:inherit;}
+.h-edit-btn:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.06);}
+body.edit-mode .h-edit-btn{display:inline-flex;align-items:center;gap:5px;}
+/* HERO EDIT PANEL */
+#hero-ep{display:none;background:var(--panel);border:1px solid var(--border);border-radius:var(--r2);padding:20px 24px;margin:14px 0 0;text-align:left;flex-direction:column;gap:12px;}
+#hero-ep.open{display:flex;}
+/* RESOURCE STRIP */
+#resources{background:var(--panel);border:1px solid var(--border);border-radius:var(--r2);padding:22px 28px;margin-bottom:22px;position:relative;overflow:hidden;}
+#resources::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold-dim),var(--gold),var(--gold-dim));}
+.res-inner{display:flex;align-items:flex-start;gap:18px;}
+.res-icon{width:48px;height:48px;border-radius:50%;flex-shrink:0;background:rgba(201,168,76,0.07);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:22px;}
+.res-text h3{font-size:15px;font-weight:700;color:var(--cream);margin-bottom:6px;}
+.res-text p{font-size:12px;color:var(--muted);line-height:1.72;max-width:540px;}
+/* SECTION LABEL */
+.sec-lbl{display:flex;align-items:center;gap:11px;font-size:9px;font-weight:700;letter-spacing:2.5px;color:var(--gold-d);text-transform:uppercase;margin-bottom:14px;}
+.sec-lbl::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--gold-dim),transparent);}
+/* HERO CARD */
+#card-hero{position:relative;background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:16px;transition:var(--tr);}
+#card-hero:hover{border-color:var(--border-b);box-shadow:var(--sh);}
+#card-hero:hover .ch-arrow{opacity:1;transform:translate(3px,-3px);}
+.ch-top{height:3px;background:linear-gradient(90deg,var(--gold-dim),var(--gold-b),var(--gold-dim));}
+.ch-body{display:flex;align-items:center;gap:28px;padding:28px 32px;cursor:pointer;}
+@media(max-width:600px){.ch-body{flex-direction:column;gap:16px;padding:22px 20px;text-align:center;}}
+.ch-icon{width:72px;height:72px;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,rgba(201,168,76,0.1),rgba(201,168,76,0.03));border:1px solid rgba(201,168,76,0.25);display:flex;align-items:center;justify-content:center;font-size:32px;}
+.ch-text{flex:1;}
+.ch-num{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold-d);text-transform:uppercase;margin-bottom:6px;}
+.ch-label{font-size:clamp(18px,3vw,26px);font-weight:700;color:var(--cream);line-height:1.2;margin-bottom:6px;}
+.ch-desc{font-size:12px;color:var(--muted);line-height:1.65;max-width:480px;}
+.ch-url{font-size:10px;color:var(--subtle);margin-top:5px;}
+.ch-cta{flex-shrink:0;}
+@media(max-width:600px){.ch-cta{width:100%;}}
+.ch-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 26px;border-radius:var(--r);border:1px solid var(--gold-d);background:rgba(201,168,76,0.07);color:var(--gold-p);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:var(--tr);font-family:inherit;white-space:nowrap;}
+.ch-btn:hover{background:rgba(201,168,76,0.15);border-color:var(--gold);color:var(--gold-b);}
+.ch-arrow{opacity:0;transition:var(--tr);display:inline-block;font-size:13px;}
+.ch-edit-bar{display:none;padding:9px 32px;border-top:1px solid var(--border);background:rgba(0,0,0,0.15);justify-content:flex-end;gap:8px;}
+body.edit-mode .ch-edit-bar{display:flex;}
+/* 3-GRID */
+#btn-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px;}
+@media(max-width:640px){#btn-grid{grid-template-columns:1fr;}}
+@media(min-width:641px) and (max-width:800px){#btn-grid{grid-template-columns:1fr 1fr;}}
+.access-card{position:relative;background:var(--card);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;transition:var(--tr);display:flex;flex-direction:column;}
+.access-card:hover{border-color:var(--border-b);transform:translateY(-3px);box-shadow:var(--sh);}
+.access-card:hover .card-arrow{opacity:1;transform:translate(2px,-2px);}
+.card-top-bar{height:3px;}
+.cc1 .card-top-bar{background:linear-gradient(90deg,var(--maroon),var(--maroon-l));}
+.cc2 .card-top-bar{background:linear-gradient(90deg,var(--olive),var(--olive-l));}
+.cc3 .card-top-bar{background:linear-gradient(90deg,var(--teal),var(--teal-l));}
+.card-inner{padding:22px 18px;flex:1;display:flex;flex-direction:column;cursor:pointer;}
+.card-num{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--subtle);text-transform:uppercase;margin-bottom:10px;}
+.card-icon{font-size:24px;margin-bottom:10px;display:block;}
+.card-label{font-size:14px;font-weight:700;color:var(--cream);line-height:1.3;margin-bottom:6px;flex:1;word-break:break-word;}
+.card-url{font-size:10px;color:var(--subtle);margin-bottom:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
+.card-goto{display:inline-flex;align-items:center;gap:5px;justify-content:center;padding:7px 12px;border-radius:var(--r);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:var(--tr);font-family:inherit;width:100%;}
+.cc1 .card-goto:hover{border-color:var(--maroon-l);color:#e07070;background:rgba(107,31,31,0.1);}
+.cc2 .card-goto:hover{border-color:var(--olive-l);color:#8fba6a;background:rgba(58,72,40,0.12);}
+.cc3 .card-goto:hover{border-color:var(--teal-l);color:#6acaca;background:rgba(26,58,56,0.15);}
+.card-arrow{opacity:0;transition:var(--tr);display:inline-block;}
+.card-edit-bar{display:none;padding:8px 18px;border-top:1px solid var(--border);background:rgba(0,0,0,0.15);justify-content:flex-end;}
+body.edit-mode .card-edit-bar{display:flex;}
+/* EDIT PANELS */
+.edit-panel,.ch-edit-panel{display:none;padding:16px 20px;border-top:1px solid var(--border);background:rgba(0,0,0,0.22);flex-direction:column;gap:10px;}
+.edit-panel.open,.ch-edit-panel.open{display:flex;}
+.ch-edit-panel{padding:18px 32px;}
+@media(max-width:600px){.ch-edit-panel{padding:16px 20px;}}
+.ep-lbl{font-size:9px;font-weight:700;letter-spacing:2px;color:var(--gold-d);text-transform:uppercase;margin-bottom:3px;}
+.ep-in{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(201,168,76,0.2);border-radius:var(--r);padding:8px 11px;color:var(--cream);font-size:12px;font-family:inherit;outline:none;transition:var(--tr);}
+.ep-in:focus{border-color:var(--gold);background:rgba(201,168,76,0.05);}
+.ep-in::placeholder{color:var(--subtle);}
+textarea.ep-in{resize:vertical;}
+.ep-row{display:flex;gap:6px;}
+.ep-g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:500px){.ep-g2{grid-template-columns:1fr;}}
+.ep-fld{display:flex;flex-direction:column;gap:3px;}
+.ep-save{flex:1;padding:7px 0;border-radius:var(--r);border:1px solid var(--olive-l);background:rgba(58,72,40,0.2);color:#8fba6a;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:var(--tr);font-family:inherit;}
+.ep-save:hover{background:rgba(58,72,40,0.35);}
+.ep-cancel{padding:7px 12px;border-radius:var(--r);border:1px solid var(--border);background:transparent;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:var(--tr);font-family:inherit;}
+.ep-cancel:hover{border-color:var(--gold);color:var(--gold);}
+.edit-trigger{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--gold-d);text-transform:uppercase;cursor:pointer;transition:var(--tr);background:none;border:none;font-family:inherit;}
+.edit-trigger:hover{color:var(--gold);}
+/* PROFILE */
+#profile-section{background:var(--panel);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;margin-bottom:28px;}
+.prof-top{height:2px;background:linear-gradient(90deg,var(--maroon),var(--maroon-l),var(--maroon));}
+.prof-inner{display:flex;gap:24px;align-items:flex-start;padding:26px 30px;}
+@media(max-width:600px){.prof-inner{flex-direction:column;padding:22px 20px;}}
+.prof-avatar{width:76px;height:76px;flex-shrink:0;border-radius:50%;background:linear-gradient(135deg,var(--gold-dim),var(--card));border:2px solid var(--gold-d);display:flex;align-items:center;justify-content:center;font-size:30px;}
+.prof-body{flex:1;}
+.prof-name{font-size:19px;font-weight:700;color:var(--cream);margin-bottom:4px;}
+.prof-title{font-size:10px;font-weight:700;letter-spacing:2px;color:var(--gold);text-transform:uppercase;margin-bottom:11px;display:block;}
+.prof-bio{font-size:12px;color:var(--muted);line-height:1.75;margin-bottom:13px;}
+.prof-contact{display:inline-flex;align-items:center;gap:7px;padding:5px 13px;border-radius:100px;border:1px solid var(--border);font-size:11px;color:var(--muted);text-decoration:none;transition:var(--tr);cursor:pointer;background:transparent;font-family:inherit;}
+.prof-contact:hover{border-color:var(--gold);color:var(--gold);background:rgba(201,168,76,0.06);}
+.prof-edit-bar{display:none;padding:9px 30px;border-top:1px solid var(--border);background:rgba(0,0,0,0.15);}
+body.edit-mode .prof-edit-bar{display:flex;}
+#prof-ep{display:none;padding:20px 30px;border-top:1px solid var(--border);background:rgba(0,0,0,0.2);flex-direction:column;gap:12px;}
+#prof-ep.open{display:flex;}
+@media(max-width:600px){#prof-ep,.prof-edit-bar{padding-left:20px;padding-right:20px;}}
+/* EDIT BADGE */
+.edit-badge{display:none;position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(201,168,76,0.1);border:1px solid var(--gold);color:var(--gold);font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:5px 18px;border-radius:100px;pointer-events:none;z-index:100;animation:pulse 2s infinite;}
+body.edit-mode .edit-badge{display:block;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.55;}}
+/* FOOTER */
+#footer{text-align:center;padding:28px 0 14px;border-top:1px solid var(--border);}
+.footer-q{font-size:13px;font-style:italic;color:var(--subtle);letter-spacing:1px;margin-bottom:7px;}
+.footer-q em{color:var(--gold-d);font-style:normal;}
+.footer-c{font-size:10px;color:rgba(90,80,60,0.45);letter-spacing:1px;text-transform:uppercase;}
+/* TOAST */
+#toast{position:fixed;bottom:56px;left:50%;transform:translateX(-50%) translateY(8px);background:var(--gold);color:var(--ink);padding:7px 20px;border-radius:100px;font-size:11px;font-weight:700;letter-spacing:0.8px;opacity:0;pointer-events:none;transition:all 0.28s;z-index:300;}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* FADE */
+.fi{opacity:0;transform:translateY(16px);transition:opacity 0.5s ease,transform 0.5s ease;}
+.fi.v{opacity:1;transform:translateY(0);}
+::selection{background:rgba(201,168,76,0.22);}
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="bg-layer"></div>
+<div class="bg-grid"></div>
+<div class="bg-orn"></div>
+<div id="app">
+
+<!-- TOPBAR -->
+<div id="topbar">
+  <button class="tb-btn" id="btn-view" onclick="setMode('view')">👁 View</button>
+  <button class="tb-btn active" id="btn-edit-mode" onclick="setMode('edit')">✏️ Edit</button>
+  <button class="tb-btn tb-save" onclick="saveAll()">💾 Simpan</button>
+  <button class="tb-btn tb-reset" onclick="resetAll()">↺ Reset</button>
+</div>
+
+<!-- HERO -->
+<div id="hero" class="fi">
+  <div class="h-eyebrow-wrap">
+    <div class="h-line"></div>
+    <span class="h-eyebrow">Program Pelatihan</span>
+    <div class="h-line r"></div>
+  </div>
+  <span class="h-sym">🕌</span>
+  <h1 class="h-title" id="h-title-display"><em>Sirah-Based</em><br/>Tour Leader Training</h1>
+  <p class="h-sub" id="h-sub-display">Nabawiyyah · Professional · Immersive</p>
+  <div class="h-divider"></div>
+  <button class="h-edit-btn" onclick="toggleHeroEP()">✏️ Edit Judul &amp; Sub Judul</button>
+</div>
+
+<!-- HERO EDIT PANEL -->
+<div id="hero-ep" class="fi">
+  <div class="sec-lbl" style="margin-bottom:8px">Edit Judul Halaman</div>
+  <div class="ep-g2">
+    <div class="ep-fld">
+      <div class="ep-lbl">Judul (bagian miring / italic)</div>
+      <input class="ep-in" id="hep-italic" type="text" placeholder="Sirah-Based"/>
+    </div>
+    <div class="ep-fld">
+      <div class="ep-lbl">Judul (bagian biasa)</div>
+      <input class="ep-in" id="hep-plain" type="text" placeholder="Tour Leader Training"/>
+    </div>
+  </div>
+  <div class="ep-fld">
+    <div class="ep-lbl">Sub Judul</div>
+    <input class="ep-in" id="hep-sub" type="text" placeholder="Nabawiyyah · Professional · Immersive"/>
+  </div>
+  <div class="ep-row">
+    <button class="ep-save" onclick="saveHero()">✓ Simpan Judul</button>
+    <button class="ep-cancel" onclick="toggleHeroEP()">Batal</button>
+  </div>
+</div>
+
+<!-- RESOURCE STRIP -->
+<div id="resources" class="fi">
+  <div class="sec-lbl">Training Resources</div>
+  <div class="res-inner">
+    <div class="res-icon">📚</div>
+    <div class="res-text">
+      <h3>Akses Materi Pelatihan</h3>
+      <p>Akses seluruh materi utama pelatihan: presentasi, framework praktik, dan referensi sirah nabawiyyah untuk Tour Leader Umroh &amp; Haji.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODUL LABEL -->
+<div class="sec-lbl fi">Modul Utama</div>
+
+<!-- HERO CARD: SLIDE PRESENTASI -->
+<div id="card-hero" class="fi">
+  <div class="ch-top"></div>
+  <div class="ch-body" onclick="openLink(0)">
+    <div class="ch-icon"><span id="icon-0">🎞️</span></div>
+    <div class="ch-text">
+      <div class="ch-num">Modul 01 · Materi Utama</div>
+      <div class="ch-label" id="label-0">Slide Presentasi</div>
+      <div class="ch-desc">Akses slide presentasi lengkap untuk sesi training. Dirancang untuk digunakan bersama peserta secara langsung di kelas.</div>
+      <div class="ch-url" id="url-display-0">URL belum diatur</div>
+    </div>
+    <div class="ch-cta">
+      <button class="ch-btn" onclick="openLink(0);event.stopPropagation()">Buka Slide <span class="ch-arrow">↗</span></button>
+    </div>
+  </div>
+  <div class="ch-edit-bar">
+    <button class="edit-trigger" onclick="toggleEditH(event)">✏️ Edit Link</button>
+  </div>
+  <div class="ch-edit-panel" id="edit-panel-0">
+    <div class="ep-g2">
+      <div class="ep-fld">
+        <div class="ep-lbl">Judul Modul</div>
+        <input class="ep-in" id="ep-label-0" type="text" placeholder="Slide Presentasi"/>
+      </div>
+      <div class="ep-fld">
+        <div class="ep-lbl">URL Tujuan</div>
+        <input class="ep-in" id="ep-url-0" type="url" placeholder="https://..."/>
+      </div>
+    </div>
+    <div class="ep-row">
+      <button class="ep-save" onclick="saveCard(0)">✓ Simpan</button>
+      <button class="ep-cancel" onclick="closeAllPanels()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3-GRID -->
+<div id="btn-grid">
+
+  <!-- CARD 1: Framework Training -->
+  <div class="access-card cc1 fi">
+    <div class="card-top-bar"></div>
+    <div class="card-inner" onclick="openLink(1)">
+      <div class="card-num">Modul 02</div>
+      <span class="card-icon" id="icon-1">⚙️</span>
+      <div class="card-label" id="label-1">Framework Training</div>
+      <div class="card-url" id="url-display-1">URL belum diatur</div>
+      <button class="card-goto" onclick="openLink(1);event.stopPropagation()">Buka Materi <span class="card-arrow">↗</span></button>
+    </div>
+    <div class="card-edit-bar">
+      <button class="edit-trigger" onclick="toggleEdit(1)">✏️ Edit</button>
+    </div>
+    <div class="edit-panel" id="edit-panel-1">
+      <div class="ep-fld"><div class="ep-lbl">Judul Modul</div><input class="ep-in" id="ep-label-1" type="text" placeholder="Framework Training"/></div>
+      <div class="ep-fld"><div class="ep-lbl">URL Tujuan</div><input class="ep-in" id="ep-url-1" type="url" placeholder="https://..."/></div>
+      <div class="ep-row">
+        <button class="ep-save" onclick="saveCard(1)">✓ Simpan</button>
+        <button class="ep-cancel" onclick="toggleEdit(1)">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD 2: Script Praktek -->
+  <div class="access-card cc2 fi">
+    <div class="card-top-bar"></div>
+    <div class="card-inner" onclick="openLink(2)">
+      <div class="card-num">Modul 03</div>
+      <span class="card-icon" id="icon-2">🎭</span>
+      <div class="card-label" id="label-2">Script Praktek</div>
+      <div class="card-url" id="url-display-2">URL belum diatur</div>
+      <button class="card-goto" onclick="openLink(2);event.stopPropagation()">Buka Materi <span class="card-arrow">↗</span></button>
+    </div>
+    <div class="card-edit-bar">
+      <button class="edit-trigger" onclick="toggleEdit(2)">✏️ Edit</button>
+    </div>
+    <div class="edit-panel" id="edit-panel-2">
+      <div class="ep-fld"><div class="ep-lbl">Judul Modul</div><input class="ep-in" id="ep-label-2" type="text" placeholder="Script Praktek"/></div>
+      <div class="ep-fld"><div class="ep-lbl">URL Tujuan</div><input class="ep-in" id="ep-url-2" type="url" placeholder="https://..."/></div>
+      <div class="ep-row">
+        <button class="ep-save" onclick="saveCard(2)">✓ Simpan</button>
+        <button class="ep-cancel" onclick="toggleEdit(2)">Batal</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD 3: Referensi Sirah -->
+  <div class="access-card cc3 fi">
+    <div class="card-top-bar"></div>
+    <div class="card-inner" onclick="openLink(3)">
+      <div class="card-num">Modul 04</div>
+      <span class="card-icon" id="icon-3">📜</span>
+      <div class="card-label" id="label-3">Referensi Sirah Nabawiyyah</div>
+      <div class="card-url" id="url-display-3">URL belum diatur</div>
+      <button class="card-goto" onclick="openLink(3);event.stopPropagation()">Buka Materi <span class="card-arrow">↗</span></button>
+    </div>
+    <div class="card-edit-bar">
+      <button class="edit-trigger" onclick="toggleEdit(3)">✏️ Edit</button>
+    </div>
+    <div class="edit-panel" id="edit-panel-3">
+      <div class="ep-fld"><div class="ep-lbl">Judul Modul</div><input class="ep-in" id="ep-label-3" type="text" placeholder="Referensi Sirah Nabawiyyah"/></div>
+      <div class="ep-fld"><div class="ep-lbl">URL Tujuan</div><input class="ep-in" id="ep-url-3" type="url" placeholder="https://..."/></div>
+      <div class="ep-row">
+        <button class="ep-save" onclick="saveCard(3)">✓ Simpan</button>
+        <button class="ep-cancel" onclick="toggleEdit(3)">Batal</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /btn-grid -->
+
+<!-- PROFILE -->
+<div class="sec-lbl fi">Pembicara &amp; Trainer</div>
+<div id="profile-section" class="fi">
+  <div class="prof-top"></div>
+  <div class="prof-inner">
+    <div class="prof-avatar">👤</div>
+    <div class="prof-body">
+      <div class="prof-name" id="prof-name">Nama Trainer</div>
+      <span class="prof-title" id="prof-title">Tour Leader · Trainer Sirah Nabawiyyah</span>
+      <div class="prof-bio" id="prof-bio">Bio singkat tentang trainer — pengalaman, spesialisasi, dan latar belakang dalam membimbing perjalanan umroh dan haji berbasis sirah nabawiyyah.</div>
+      <button class="prof-contact" onclick="openContact()">📷 <span id="prof-ig">@username</span></button>
+    </div>
+  </div>
+  <div class="prof-edit-bar">
+    <button class="edit-trigger" onclick="toggleProfEP()">✏️ Edit Profil Trainer</button>
+  </div>
+  <div id="prof-ep">
+    <div class="sec-lbl" style="margin-bottom:10px">Edit Profil Trainer</div>
+    <div class="ep-g2">
+      <div class="ep-fld"><div class="ep-lbl">Nama Lengkap</div><input class="ep-in" id="pep-name" type="text" placeholder="Nama trainer..."/></div>
+      <div class="ep-fld"><div class="ep-lbl">Title / Profesi</div><input class="ep-in" id="pep-title" type="text" placeholder="Tour Leader · Trainer..."/></div>
+      <div class="ep-fld"><div class="ep-lbl">Instagram</div><input class="ep-in" id="pep-ig" type="text" placeholder="@username"/></div>
+      <div class="ep-fld"><div class="ep-lbl">Link Instagram (URL)</div><input class="ep-in" id="pep-ig-url" type="url" placeholder="https://instagram.com/..."/></div>
+    </div>
+    <div class="ep-fld"><div class="ep-lbl">Bio Singkat</div><textarea class="ep-in" id="pep-bio" rows="3" placeholder="Tulis bio singkat..."></textarea></div>
+    <div class="ep-row" style="margin-top:2px">
+      <button class="ep-save" onclick="saveProfile()">✓ Simpan Profil</button>
+      <button class="ep-cancel" onclick="toggleProfEP()">Batal</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div id="footer" class="fi">
+  <p class="footer-q">"From Visiting Places to <em>Walking Through Meaning</em>."</p>
+  <p class="footer-c">Sirah-Based Tour Leader Training &nbsp;·&nbsp; Nabawiyyah System</p>
+</div>
+
+</div><!-- /app -->
+<div class="edit-badge">✏️ Edit Mode Aktif</div>
+<div id="toast"></div>
+
+<script>
+var DEF = {
+  hero:{ italic:'Sirah-Based', plain:'Tour Leader Training', sub:'Nabawiyyah · Professional · Immersive' },
+  cards:[
+    {label:'Slide Presentasi',         url:'',icon:'🎞️'},
+    {label:'Framework Training',        url:'',icon:'⚙️'},
+    {label:'Script Praktek',            url:'',icon:'🎭'},
+    {label:'Referensi Sirah Nabawiyyah',url:'',icon:'📜'}
+  ],
+  profile:{name:'Nama Trainer',title:'Tour Leader · Trainer Sirah Nabawiyyah',bio:'Bio singkat tentang trainer — pengalaman, spesialisasi, dan latar belakang dalam membimbing perjalanan umroh dan haji berbasis sirah nabawiyyah.',ig:'@username',igUrl:''}
+};
+var SK='sbt_dash_v2', N=4;
+var S={hero:{},cards:[],profile:{}};
+
+function cp(o){return JSON.parse(JSON.stringify(o));}
+
+function load(){
+  try{
+    var r=localStorage.getItem(SK);
+    if(r){var s=JSON.parse(r);S.hero=s.hero||cp(DEF.hero);S.cards=s.cards||cp(DEF.cards);S.profile=s.profile||cp(DEF.profile);while(S.cards.length<N)S.cards.push(cp(DEF.cards[S.cards.length]));}
+    else{S.hero=cp(DEF.hero);S.cards=cp(DEF.cards);S.profile=cp(DEF.profile);}
+  }catch(e){S.hero=cp(DEF.hero);S.cards=cp(DEF.cards);S.profile=cp(DEF.profile);}
+}
+
+function persist(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){toast('Gagal menyimpan');}}
+function saveAll(){persist();toast('💾 Semua perubahan disimpan');}
+function resetAll(){if(!confirm('Reset semua ke pengaturan awal?'))return;localStorage.removeItem(SK);S.hero=cp(DEF.hero);S.cards=cp(DEF.cards);S.profile=cp(DEF.profile);renderAll();toast('↺ Direset ke default');}
+
+function renderAll(){renderHero();renderCards();renderProfile();}
+
+function renderHero(){
+  var h=S.hero;
+  var td=document.getElementById('h-title-display');
+  if(td)td.innerHTML='<em>'+esc(h.italic||DEF.hero.italic)+'</em><br/>'+esc(h.plain||DEF.hero.plain);
+  setTxt('h-sub-display',h.sub||DEF.hero.sub);
+  setVal('hep-italic',h.italic||'');setVal('hep-plain',h.plain||'');setVal('hep-sub',h.sub||'');
+}
+
+function renderCards(){
+  for(var i=0;i<N;i++){
+    var c=S.cards[i]||DEF.cards[i];
+    setTxt('label-'+i,c.label||DEF.cards[i].label);
+    setTxt('icon-'+i,c.icon||DEF.cards[i].icon);
+    var ue=document.getElementById('url-display-'+i);
+    if(ue){
+      if(c.url){try{var u=new URL(c.url);ue.textContent=u.hostname+(u.pathname&&u.pathname!=='/'?u.pathname.substring(0,20)+(u.pathname.length>20?'…':''):'');}catch(e){ue.textContent=c.url.length>40?c.url.substring(0,40)+'…':c.url;}}
+      else ue.textContent='URL belum diatur';
+    }
+    setVal('ep-label-'+i,c.label||'');setVal('ep-url-'+i,c.url||'');
+  }
+}
+
+function renderProfile(){
+  var p=S.profile;
+  setTxt('prof-name',p.name||DEF.profile.name);setTxt('prof-title',p.title||DEF.profile.title);
+  setTxt('prof-bio',p.bio||DEF.profile.bio);setTxt('prof-ig',p.ig||DEF.profile.ig);
+  setVal('pep-name',p.name||'');setVal('pep-title',p.title||'');setVal('pep-bio',p.bio||'');setVal('pep-ig',p.ig||'');setVal('pep-ig-url',p.igUrl||'');
+}
+
+function setTxt(id,t){var e=document.getElementById(id);if(e)e.textContent=t;}
+function setVal(id,v){var e=document.getElementById(id);if(e)e.value=v;}
+function getVal(id){var e=document.getElementById(id);return e?e.value.trim():'';}
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function closeAllPanels(){
+  for(var i=0;i<N;i++){var p=document.getElementById('edit-panel-'+i);if(p)p.classList.remove('open');}
+  var pp=document.getElementById('prof-ep');if(pp)pp.classList.remove('open');
+  var hp=document.getElementById('hero-ep');if(hp)hp.classList.remove('open');
+}
+
+function toggleHeroEP(){
+  var p=document.getElementById('hero-ep');if(!p)return;
+  if(p.classList.contains('open')){p.classList.remove('open');}
+  else{closeAllPanels();setVal('hep-italic',S.hero.italic||'');setVal('hep-plain',S.hero.plain||'');setVal('hep-sub',S.hero.sub||'');p.classList.add('open');setTimeout(function(){var e=document.getElementById('hep-italic');if(e)e.focus();},50);}
+}
+
+function saveHero(){
+  var ti=getVal('hep-italic'),tp=getVal('hep-plain'),sb=getVal('hep-sub');
+  if(ti)S.hero.italic=ti;if(tp)S.hero.plain=tp;if(sb)S.hero.sub=sb;
+  persist();renderHero();toggleHeroEP();toast('✓ Judul disimpan');
+}
+
+function openLink(i){
+  var url=S.cards[i]&&S.cards[i].url;
+  if(!url||!url.trim()){
+    if(document.body.classList.contains('edit-mode')){if(i===0)toggleEditH(null,true);else toggleEdit(i,true);toast('Isi URL terlebih dahulu ↓');}
+    else toast('Link belum diatur. Aktifkan Edit Mode.');
+    return;
+  }
+  var t=url.trim();if(!/^https?:\/\//i.test(t))t='https://'+t;
+  window.open(t,'_blank','noopener,noreferrer');
+}
+
+function toggleEditH(e,force){
+  if(e&&e.stopPropagation)e.stopPropagation();
+  var p=document.getElementById('edit-panel-0');if(!p)return;
+  var open=p.classList.contains('open');closeAllPanels();
+  if(!open||force){setVal('ep-label-0',S.cards[0].label||'');setVal('ep-url-0',S.cards[0].url||'');p.classList.add('open');setTimeout(function(){var e=document.getElementById('ep-label-0');if(e)e.focus();},50);}
+}
+
+function toggleEdit(i,force){
+  var p=document.getElementById('edit-panel-'+i);if(!p)return;
+  var open=p.classList.contains('open');closeAllPanels();
+  if(!open||force){setVal('ep-label-'+i,S.cards[i]?S.cards[i].label:'');setVal('ep-url-'+i,S.cards[i]?S.cards[i].url:'');p.classList.add('open');setTimeout(function(){var e=document.getElementById('ep-label-'+i);if(e)e.focus();},50);}
+}
+
+function saveCard(i){
+  var lv=getVal('ep-label-'+i),uv=getVal('ep-url-'+i);
+  if(!S.cards[i])S.cards[i]=cp(DEF.cards[i]);
+  if(lv)S.cards[i].label=lv;S.cards[i].url=uv;
+  persist();renderCards();closeAllPanels();toast('✓ Modul '+(i+1)+' disimpan');
+}
+
+function toggleProfEP(){
+  var p=document.getElementById('prof-ep');if(!p)return;
+  if(p.classList.contains('open')){p.classList.remove('open');}
+  else{closeAllPanels();setVal('pep-name',S.profile.name||'');setVal('pep-title',S.profile.title||'');setVal('pep-bio',S.profile.bio||'');setVal('pep-ig',S.profile.ig||'');setVal('pep-ig-url',S.profile.igUrl||'');p.classList.add('open');setTimeout(function(){var e=document.getElementById('pep-name');if(e)e.focus();},50);}
+}
+
+function saveProfile(){
+  var n=getVal('pep-name'),ti=getVal('pep-title'),bi=getVal('pep-bio'),ig=getVal('pep-ig'),iu=getVal('pep-ig-url');
+  if(n)S.profile.name=n;if(ti)S.profile.title=ti;if(bi)S.profile.bio=bi;if(ig)S.profile.ig=ig;S.profile.igUrl=iu;
+  persist();renderProfile();toggleProfEP();toast('✓ Profil trainer disimpan');
+}
+
+function openContact(){
+  var url=S.profile.igUrl;
+  if(url&&url.trim()){var t=url.trim();if(!/^https?:\/\//i.test(t))t='https://'+t;window.open(t,'_blank','noopener,noreferrer');return;}
+  var ig=(S.profile.ig||'').replace('@','');
+  if(ig&&ig!=='username'){window.open('https://instagram.com/'+ig,'_blank','noopener,noreferrer');}
+  else{if(document.body.classList.contains('edit-mode')){toggleProfEP();toast('Isi link Instagram ↓');}else toast('Link kontak belum diatur.');}
+}
+
+function setMode(mode){
+  var bv=document.getElementById('btn-view'),be=document.getElementById('btn-edit-mode');
+  if(mode==='edit'){document.body.classList.add('edit-mode');if(bv)bv.classList.remove('active');if(be)be.classList.add('active');toast('✏️ Edit Mode — klik Edit untuk mengatur link');}
+  else{document.body.classList.remove('edit-mode');closeAllPanels();if(be)be.classList.remove('active');if(bv)bv.classList.add('active');toast('👁 View Mode');}
+}
+
+var _tt;
+function toast(msg){var e=document.getElementById('toast');if(!e)return;clearTimeout(_tt);e.textContent=msg;e.classList.add('show');_tt=setTimeout(function(){e.classList.remove('show');},2400);}
+
+document.addEventListener('keydown',function(e){
+  if((e.ctrlKey||e.metaKey)&&e.key==='s'){e.preventDefault();saveAll();}
+  if(e.key==='Escape')closeAllPanels();
+});
+
+// enter key shortcuts
+(function(){
+  for(var i=0;i<N;i++){
+    (function(idx){
+      var ul=document.getElementById('ep-url-'+idx);if(ul)ul.addEventListener('keydown',function(e){if(e.key==='Enter')saveCard(idx);});
+      var ll=document.getElementById('ep-label-'+idx);if(ll)ll.addEventListener('keydown',function(e){if(e.key==='Enter'){var u=document.getElementById('ep-url-'+idx);if(u)u.focus();}});
+    })(i);
+  }
+  var hi=document.getElementById('hep-italic');if(hi)hi.addEventListener('keydown',function(e){if(e.key==='Enter'){var p=document.getElementById('hep-plain');if(p)p.focus();}});
+  var hp=document.getElementById('hep-plain');if(hp)hp.addEventListener('keydown',function(e){if(e.key==='Enter'){var s=document.getElementById('hep-sub');if(s)s.focus();}});
+  var hs=document.getElementById('hep-sub');if(hs)hs.addEventListener('keydown',function(e){if(e.key==='Enter')saveHero();});
+})();
+
+// fade in
+(function(){document.querySelectorAll('.fi').forEach(function(el,i){setTimeout(function(){el.classList.add('v');},i*65);});})();
+
+load();renderAll();setMode('edit');
+</script>
+</body>
+</html>
