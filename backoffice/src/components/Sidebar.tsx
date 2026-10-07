@@ -1,350 +1,123 @@
 import React from 'react';
-import { useApp, NavTab } from '../context/AppContext';
-import { BrandLogo } from './BrandLogo';
+import { useApp } from '../context/AppContext';
 import { COMPANY_INFO } from '../data/mockData';
-import {
-  LayoutDashboard,
-  Compass,
-  Users,
-  FileSpreadsheet,
-  BedDouble,
-  Receipt,
-  MessageSquareQuote,
-  Briefcase,
-  Upload,
-  Sun,
-  Moon,
-  LogOut,
-  User,
-} from 'lucide-react';
+import { BrandLogo } from './BrandLogo';
+import { NAV_GROUPS } from './nav';
+import { cx } from './ui';
+import { LogOut, PhoneCall, X } from 'lucide-react';
 
-interface NavItem {
-  id: NavTab;
-  label: string;
-  icon: React.ComponentType<{ className?: string }>;
-  badgeCount?: number;
-  channelColor?: string;
-}
+export const Sidebar: React.FC<{ open: boolean; onClose: () => void }> = ({ open, onClose }) => {
+  const { currentTab, setCurrentTab, jamaahList, packages, currentUser, logout, setIsLogoModalOpen } = useApp();
 
-export const Sidebar: React.FC = () => {
-  const {
-    currentTab,
-    setCurrentTab,
-    jamaahList,
-    packages,
-    theme,
-    toggleTheme,
-    setIsLogoModalOpen,
-    currentUser,
-    logout,
-  } = useApp();
-
-  const isDark = theme === 'dark';
-  const incompleteCount = jamaahList.filter((j) => !j.isDataComplete).length;
-
-  const mainViews: NavItem[] = [
-    {
-      id: 'dashboard',
-      label: 'Ringkasan Hari Ini',
-      icon: LayoutDashboard,
-      channelColor: '#f27244',
-    },
-    {
-      id: 'packages',
-      label: '3 Paket & Kanban',
-      icon: Compass,
-      badgeCount: packages.length,
-      channelColor: '#f59e0b',
-    },
-    {
-      id: 'jamaah',
-      label: 'Data & Berkas Jamaah',
-      icon: Users,
-      badgeCount: incompleteCount > 0 ? incompleteCount : jamaahList.length,
-      channelColor: '#10b981',
-    },
-    {
-      id: 'manifest',
-      label: 'Manivest & Penerbangan',
-      icon: FileSpreadsheet,
-      channelColor: '#38bdf8',
-    },
-  ];
-
-  const secondaryViews: NavItem[] = [
-    {
-      id: 'rooming',
-      label: 'Rooming List Hotel',
-      icon: BedDouble,
-    },
-    {
-      id: 'finance',
-      label: 'Keuangan & Kwitansi',
-      icon: Receipt,
-    },
-    {
-      id: 'whatsapp',
-      label: 'WhatsApp Center',
-      icon: MessageSquareQuote,
-    },
-    {
-      id: 'equipment',
-      label: 'Logistik & Koper',
-      icon: Briefcase,
-    },
-  ];
+  const incomplete = jamaahList.filter((j) => !j.isDataComplete).length;
+  const counts: Partial<Record<string, number>> = {
+    packages: packages.length,
+    jamaah: incomplete || undefined,
+  };
 
   return (
-    <aside
-      className={`w-64 flex flex-col justify-between shrink-0 min-h-screen select-none font-sans border-r transition-colors ${
-        isDark
-          ? 'bg-[#1e1d1b] text-[#f4f3ef] border-[#33312e]'
-          : 'bg-[#faf9f6] text-[#23211e] border-[#e8e5dc]'
-      }`}
-    >
-      <div>
-        {/* Brand Header with Uploadable Logo */}
-        <div
-          className={`p-4 pb-3 border-b transition-colors ${
-            isDark ? 'bg-[#1a1918] border-[#2d2c29]' : 'bg-[#f4f3ee] border-[#eeece6]'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <div className="max-w-[190px]">
-              <BrandLogo className="h-8" />
-            </div>
-            <div
-              className="w-2 h-2 rounded-full bg-[#f27244] shadow-[0_0_8px_#f27244] shrink-0"
-              title="Sistem Backoffice Aktif"
-            />
-          </div>
-
-          <div
-            className={`mt-2 flex items-center justify-between text-[10px] ${
-              isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-            }`}
-          >
-            <span className="truncate">PPIU Kemenhaj RI</span>
-            <span className="font-mono text-[#f27244] font-semibold">YOGYAKARTA</span>
-          </div>
-        </div>
-
-        {/* Primary Views (Sunsama Daily Channels) */}
-        <div className="p-3 space-y-1">
-          <div
-            className={`px-2 pt-2 pb-1 text-[10px] font-semibold tracking-wider uppercase ${
-              isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-            }`}
-          >
-            Workspace Utama
-          </div>
-
-          <nav className="space-y-0.5">
-            {mainViews.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentTab === item.id;
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setCurrentTab(item.id)}
-                  className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-medium transition-all ${
-                    isActive
-                      ? isDark
-                        ? 'bg-[#2d2b28] text-white shadow-xs border border-[#3d3b37]'
-                        : 'bg-white text-[#23211e] shadow-xs border border-[#dedbd2]'
-                      : isDark
-                      ? 'text-[#a6a39b] hover:text-[#f4f3ef] hover:bg-[#262523]'
-                      : 'text-[#6b6760] hover:text-[#23211e] hover:bg-[#edebe4]'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    {/* Sunsama colored indicator dot */}
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: item.channelColor }}
-                    />
-                    <Icon
-                      className={`w-3.5 h-3.5 shrink-0 ${
-                        isActive
-                          ? 'text-[#f27244]'
-                          : isDark
-                          ? 'text-[#737069]'
-                          : 'text-[#9c988f]'
-                      }`}
-                    />
-                    <span className="truncate">{item.label}</span>
-                  </div>
-
-                  {item.badgeCount !== undefined && (
-                    <span
-                      className={`text-[10px] px-1.5 py-0.2 rounded font-mono ${
-                        isActive
-                          ? 'bg-[#f27244]/20 text-[#f27244] font-semibold'
-                          : isDark
-                          ? 'bg-[#282725] text-[#8c8982]'
-                          : 'bg-[#eeebe3] text-[#737069]'
-                      }`}
-                    >
-                      {item.badgeCount}
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-
-        {/* Operational Modules (Channels) */}
-        <div className="px-3 pt-1 space-y-1">
-          <div
-            className={`px-2 pt-1 pb-1 text-[10px] font-semibold tracking-wider uppercase ${
-              isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-            }`}
-          >
-            Operasional &amp; Keuangan
-          </div>
-
-          <nav className="space-y-0.5">
-            {secondaryViews.map((item) => {
-              const Icon = item.icon;
-              const isActive = currentTab === item.id;
-
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setCurrentTab(item.id)}
-                  className={`w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                    isActive
-                      ? isDark
-                        ? 'bg-[#2d2b28] text-white shadow-xs border border-[#3d3b37]'
-                        : 'bg-white text-[#23211e] shadow-xs border border-[#dedbd2]'
-                      : isDark
-                      ? 'text-[#a6a39b] hover:text-[#f4f3ef] hover:bg-[#262523]'
-                      : 'text-[#6b6760] hover:text-[#23211e] hover:bg-[#edebe4]'
-                  }`}
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon
-                      className={`w-3.5 h-3.5 shrink-0 ${
-                        isActive
-                          ? 'text-[#f27244]'
-                          : isDark
-                          ? 'text-[#66635d]'
-                          : 'text-[#9c988f]'
-                      }`}
-                    />
-                    <span className="truncate">{item.label}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </nav>
-        </div>
-      </div>
-
-      {/* Sunsama Minimalist Footer Card */}
-      <div className="p-3 m-3 space-y-2">
-        {/* User Account & Logout */}
-        <div
-          className={`p-2.5 rounded-xl border flex items-center justify-between text-xs transition-colors ${
-            isDark
-              ? 'bg-[#1b1a19] border-[#33312e] text-[#f4f3ef]'
-              : 'bg-white border-[#e8e5dc] text-[#23211e] shadow-2xs'
-          }`}
-        >
-          <div className="flex items-center gap-2 min-w-0">
-            <div className="w-7 h-7 rounded-lg bg-[#f27244]/15 text-[#f27244] flex items-center justify-center font-bold text-xs shrink-0">
-              <User className="w-3.5 h-3.5" />
-            </div>
-            <div className="min-w-0">
-              <div className="font-bold text-[11px] truncate leading-tight">
-                {currentUser?.name || 'Administrator MKB'}
-              </div>
-              <div
-                className={`text-[9px] font-mono truncate ${
-                  isDark ? 'text-[#8c8982]' : 'text-[#737069]'
-                }`}
-              >
-                @{currentUser?.username || 'admin'} · Super Admin
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={() => {
-              if (window.confirm('Keluar dari sesi backoffice MKB Travel?')) {
-                logout();
-              }
-            }}
-            className="p-1.5 rounded-lg text-rose-500 hover:bg-rose-500/10 transition-colors shrink-0 cursor-pointer"
-            title="Keluar / Logout"
-          >
-            <LogOut className="w-3.5 h-3.5" />
+    <>
+      {/* Overlay mobile */}
+      <div
+        className={cx('fixed inset-0 z-40 bg-black/30 lg:hidden', open ? 'block' : 'hidden')}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <aside
+        className={cx(
+          'fixed inset-y-0 left-0 z-50 flex w-[264px] flex-col border-r border-line bg-surface transition-transform lg:sticky lg:top-0 lg:h-screen lg:translate-x-0',
+          open ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        <div className="flex h-[72px] items-center justify-between px-5">
+          <BrandLogo className="h-9" onClick={() => setIsLogoModalOpen(true)} />
+          <button className="icon-btn lg:hidden" onClick={onClose} aria-label="Tutup menu">
+            <X className="size-4" />
           </button>
         </div>
 
-        {/* Quick Logo & Theme Controls */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setIsLogoModalOpen(true)}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-[11px] font-medium border transition-colors cursor-pointer ${
-              isDark
-                ? 'bg-[#242321] hover:bg-[#2c2b28] border-[#383633] text-[#d6d3cb]'
-                : 'bg-white hover:bg-[#f4f3ee] border-[#dedbd2] text-[#5c5953]'
-            }`}
-          >
-            <Upload className="w-3 h-3 text-[#f27244]" />
-            <span>Upload Logo</span>
-          </button>
+        <nav className="flex-1 space-y-6 overflow-y-auto px-3 pt-2 pb-4">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label}>
+              <div className="eyebrow px-3 pb-2">{group.label}</div>
+              <ul className="space-y-0.5">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = currentTab === item.id;
+                  const count = counts[item.id];
+                  return (
+                    <li key={item.id}>
+                      <button
+                        onClick={() => {
+                          setCurrentTab(item.id);
+                          onClose();
+                        }}
+                        className={cx(
+                          'group flex h-10 w-full items-center gap-3 rounded-xl px-3 text-[13px] font-semibold transition-colors',
+                          active ? 'bg-ink text-canvas' : 'text-muted hover:bg-subtle hover:text-ink'
+                        )}
+                      >
+                        <Icon className={cx('size-[18px]', active ? 'text-accent' : 'text-faint group-hover:text-ink')} />
+                        <span className="flex-1 text-left">{item.label}</span>
+                        {count !== undefined && (
+                          <span
+                            className={cx(
+                              'num min-w-5 rounded-md px-1.5 text-center text-[11px] leading-5 font-bold',
+                              active ? 'bg-white/15 text-canvas' : item.id === 'jamaah' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400' : 'bg-subtle text-muted'
+                            )}
+                            title={item.id === 'jamaah' ? 'Jamaah dengan data belum lengkap' : undefined}
+                          >
+                            {count}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
 
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className={`p-1.5 rounded-lg border transition-colors cursor-pointer ${
-              isDark
-                ? 'bg-[#242321] hover:bg-[#2c2b28] border-[#383633] text-amber-400'
-                : 'bg-white hover:bg-[#f4f3ee] border-[#dedbd2] text-indigo-600'
-            }`}
-            title={isDark ? 'Ganti ke Tema Terang' : 'Ganti ke Tema Gelap'}
-          >
-            {isDark ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-          </button>
-        </div>
-
-        {/* Office Contact Info */}
-        <div
-          className={`p-2.5 rounded-xl border text-[11px] space-y-1 transition-colors ${
-            isDark
-              ? 'bg-[#171615] border-[#2d2c29] text-[#9c988f]'
-              : 'bg-white border-[#e8e5dc] text-[#737069] shadow-2xs'
-          }`}
-        >
-          <div className="flex items-center justify-between">
-            <span
-              className={`font-semibold text-xs ${
-                isDark ? 'text-[#f4f3ef]' : 'text-[#23211e]'
-              }`}
+        <div className="space-y-3 p-3">
+          {/* Kartu hotline (gaya kartu gelap) */}
+          <div className="rounded-2xl bg-night p-4 text-night-ink">
+            <div className="flex items-center gap-2 text-[11px] font-semibold tracking-wide text-night-muted uppercase">
+              <span className="size-1.5 rounded-full bg-emerald-400" />
+              Hotline kantor
+            </div>
+            <div className="num mt-2 text-[15px] font-bold">{COMPANY_INFO.whatsappDisplay}</div>
+            <div className="mt-0.5 truncate text-[11px] text-night-muted">Jl. Bener No.79, Tegalrejo, Yogyakarta</div>
+            <a
+              href={`https://wa.me/62${COMPANY_INFO.whatsapp.slice(1)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-flex h-8 w-full items-center justify-center gap-2 rounded-lg bg-white/10 text-xs font-semibold transition-colors hover:bg-white/15"
             >
-              Hotline Kantor
-            </span>
-            <span className="text-[9px] font-mono text-[#f27244] bg-[#f27244]/15 px-1.5 py-0.5 rounded font-bold">
-              AKTIF
-            </span>
+              <PhoneCall className="size-3.5" />
+              Buka WhatsApp
+            </a>
           </div>
-          <div
-            className={`font-mono text-xs font-semibold ${
-              isDark ? 'text-[#e2dfd7]' : 'text-[#2e2c29]'
-            }`}
-          >
-            {COMPANY_INFO.whatsappDisplay}
-          </div>
-          <div className="text-[10px] truncate opacity-80">
-            Jl. Bener No.79, Tegalrejo, Yogya
+
+          <div className="flex items-center gap-3 rounded-2xl border border-line p-2.5">
+            <span className="flex size-9 items-center justify-center rounded-full bg-accent/15 text-xs font-bold text-accent">
+              AD
+            </span>
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-[13px] font-bold text-ink">{currentUser?.name || 'Administrator MKB'}</div>
+              <div className="truncate text-[11px] text-muted">{currentUser?.role || 'Super Admin'}</div>
+            </div>
+            <button
+              className="icon-btn size-8 hover:text-rose-500"
+              title="Keluar"
+              aria-label="Keluar"
+              onClick={() => window.confirm('Keluar dari sesi backoffice MKB?') && logout()}
+            >
+              <LogOut className="size-4" />
+            </button>
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 };

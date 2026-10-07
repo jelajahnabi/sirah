@@ -1,20 +1,25 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# MKB Backoffice
 
-# Run and deploy your AI Studio app
+Sistem backoffice & operasional umroh PT Mudahkebaitullah Travel Indonesia (Yogyakarta):
+paket & kuota, database jamaah, manifest penerbangan, rooming list, keuangan & kwitansi,
+WhatsApp center, serta logistik koper.
 
-This contains everything you need to run your app locally.
+```bash
+npm install
+npm run dev     # http://localhost:3000  (login: admin / adminmkb)
+npm run build
+npm run lint    # typecheck
+```
 
-View your app in AI Studio: https://ai.studio/apps/411f99e4-801c-4485-b7f7-034f58a0a69a
+Data disimpan di `localStorage` browser (belum ada backend).
 
-## Run Locally
+## Struktur UI
 
-**Prerequisites:**  Node.js
+- `src/index.css` — design token (warna, radius, bayangan) untuk tema terang & gelap, plus kelas komponen dasar.
+- `src/components/ui.tsx` — komponen dasar: `Card`, `Button`, `Badge`, `StatCard`, `Modal`, `Field`, `Segmented`, dll.
+- `src/components/<modul>/` — satu folder per halaman; `src/components/modals/` — dialog global.
 
+## Tampilan
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+![Dashboard](docs/dashboard.png)
+![Dashboard (gelap)](docs/dashboard-dark.png)

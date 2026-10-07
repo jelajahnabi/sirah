@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { LoginView } from './components/auth/LoginView';
 import { Header } from './components/Header';
@@ -12,7 +12,6 @@ import { FinanceInvoicingView } from './components/finance/FinanceInvoicingView'
 import { WhatsAppCenterView } from './components/whatsapp/WhatsAppCenterView';
 import { EquipmentTrackerView } from './components/equipment/EquipmentTrackerView';
 
-// Modals
 import { AddJamaahModal } from './components/modals/AddJamaahModal';
 import { AddPackageModal } from './components/modals/AddPackageModal';
 import { ManagePackageModal } from './components/modals/ManagePackageModal';
@@ -23,45 +22,36 @@ import { IdCardPrintModal } from './components/modals/IdCardPrintModal';
 import { LogoUploadModal } from './components/modals/LogoUploadModal';
 import { ShippingLabelPrintModal } from './components/modals/ShippingLabelPrintModal';
 
-const MainLayout: React.FC = () => {
-  const { currentTab, theme, isAuthenticated } = useApp();
-  const isDark = theme === 'dark';
+const VIEWS = {
+  dashboard: DashboardView,
+  packages: PackageCatalogView,
+  jamaah: JamaahDatabaseView,
+  manifest: ManifestGeneratorView,
+  rooming: RoomingListView,
+  finance: FinanceInvoicingView,
+  whatsapp: WhatsAppCenterView,
+  equipment: EquipmentTrackerView,
+};
 
-  // If not authenticated, render LoginView template
-  if (!isAuthenticated) {
-    return <LoginView />;
-  }
+const MainLayout: React.FC = () => {
+  const { currentTab, isAuthenticated } = useApp();
+  const [navOpen, setNavOpen] = useState(false);
+
+  if (!isAuthenticated) return <LoginView />;
+
+  const View = VIEWS[currentTab];
 
   return (
-    <div
-      className={`min-h-screen flex font-sans antialiased transition-colors duration-150 selection:bg-[#f27244] selection:text-white ${
-        isDark ? 'bg-[#181716] text-[#f4f3ef]' : 'bg-[#f7f6f2] text-[#23211e]'
-      }`}
-    >
-      {/* Fixed / Sticky Left Sidebar (hidden during browser print) */}
-      <div className="print:hidden">
-        <Sidebar />
-      </div>
+    <div className="flex min-h-screen bg-canvas text-ink">
+      <Sidebar open={navOpen} onClose={() => setNavOpen(false)} />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
-        <div className="print:hidden">
-          <Header />
-        </div>
-
-        <main className="flex-1 p-6 max-w-7xl w-full mx-auto">
-          {currentTab === 'dashboard' && <DashboardView />}
-          {currentTab === 'packages' && <PackageCatalogView />}
-          {currentTab === 'jamaah' && <JamaahDatabaseView />}
-          {currentTab === 'manifest' && <ManifestGeneratorView />}
-          {currentTab === 'rooming' && <RoomingListView />}
-          {currentTab === 'finance' && <FinanceInvoicingView />}
-          {currentTab === 'whatsapp' && <WhatsAppCenterView />}
-          {currentTab === 'equipment' && <EquipmentTrackerView />}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Header onOpenNav={() => setNavOpen(true)} />
+        <main className="mx-auto w-full max-w-[1400px] flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <View key={currentTab} />
         </main>
       </div>
 
-      {/* Global Interactive Modals */}
       <AddJamaahModal />
       <AddPackageModal />
       <ManagePackageModal />

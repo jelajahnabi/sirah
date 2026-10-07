@@ -1,397 +1,186 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { formatRupiah } from '../../utils/formatters';
-import { X, UserPlus, Upload, FileText } from 'lucide-react';
+import { Button, Field, Modal, cx, readFileAsDataUrl } from '../ui';
+import { ChevronDown, FileCheck2, Upload, UserPlus } from 'lucide-react';
+
+const EMPTY = { fullName: '', phoneWhatsapp: '', nik: '', passportNumber: '', city: 'Yogyakarta' };
 
 export const AddJamaahModal: React.FC = () => {
-  const { showAddJamaahModal, setShowAddJamaahModal, packages, addJamaah, theme } = useApp();
+  const { showAddJamaahModal, setShowAddJamaahModal, packages, addJamaah } = useApp();
 
-  const isDark = theme === 'dark';
+  const [form, setForm] = useState(EMPTY);
+  const [pkgId, setPkgId] = useState(packages[0]?.id || '');
+  const [dp, setDp] = useState(5000000);
+  const [more, setMore] = useState(false);
+  const [ktp, setKtp] = useState<{ name: string; url: string } | null>(null);
+  const [passport, setPassport] = useState<{ name: string; url: string } | null>(null);
 
-  // Wajib
-  const [fullName, setFullName] = useState('');
-  const [phoneWhatsapp, setPhoneWhatsapp] = useState('');
+  const close = () => setShowAddJamaahModal(false);
+  const pkg = packages.find((p) => p.id === pkgId) || packages[0];
 
-  // Opsional
-  const [selectedPkgId, setSelectedPkgId] = useState(packages[0]?.id || '');
-  const [downPayment, setDownPayment] = useState<number>(5000000);
-  const [showOptionalFields, setShowOptionalFields] = useState(false);
-
-  // Opsional details
-  const [nik, setNik] = useState('');
-  const [passportNumber, setPassportNumber] = useState('');
-  const [city, setCity] = useState('Yogyakarta');
-  const [ktpFileName, setKtpFileName] = useState('');
-  const [ktpFileUrl, setKtpFileUrl] = useState('');
-  const [passportFileName, setPassportFileName] = useState('');
-  const [passportFileUrl, setPassportFileUrl] = useState('');
-
-  if (!showAddJamaahModal) return null;
-
-  const currentPkg = packages.find((p) => p.id === selectedPkgId) || packages[0];
-  const kc = currentPkg?.kanbanColors;
-
-  const handleKtpUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setKtpFileName(file.name);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setKtpFileUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
+  const pick = async (e: React.ChangeEvent<HTMLInputElement>, set: (v: { name: string; url: string }) => void) => {
+    const f = e.target.files?.[0];
+    if (f) set({ name: f.name, url: await readFileAsDataUrl(f) });
   };
 
-  const handlePassportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPassportFileName(file.name);
-      const reader = new FileReader();
-      reader.onload = () => {
-        setPassportFileUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!fullName.trim() || !phoneWhatsapp.trim()) return;
-
+    if (!form.fullName.trim() || !form.phoneWhatsapp.trim()) return;
     addJamaah({
-      fullName: fullName.trim(),
-      phoneWhatsapp: phoneWhatsapp.trim(),
-      packageId: selectedPkgId,
-      downPayment: Number(downPayment) || 0,
-      nik: nik.trim() || undefined,
-      passportNumber: passportNumber.trim() || undefined,
-      city: city.trim() || 'Yogyakarta',
-      ktpFileName: ktpFileName || undefined,
-      ktpFileUrl: ktpFileUrl || undefined,
-      passportFileName: passportFileName || undefined,
-      passportFileUrl: passportFileUrl || undefined,
+      fullName: form.fullName.trim(),
+      phoneWhatsapp: form.phoneWhatsapp.trim(),
+      packageId: pkg?.id,
+      downPayment: Number(dp) || 0,
+      nik: form.nik.trim() || undefined,
+      passportNumber: form.passportNumber.trim() || undefined,
+      city: form.city.trim() || 'Yogyakarta',
+      ktpFileName: ktp?.name,
+      ktpFileUrl: ktp?.url,
+      passportFileName: passport?.name,
+      passportFileUrl: passport?.url,
     });
-
-    // Reset & close
-    setFullName('');
-    setPhoneWhatsapp('');
-    setNik('');
-    setPassportNumber('');
-    setKtpFileName('');
-    setKtpFileUrl('');
-    setPassportFileName('');
-    setPassportFileUrl('');
-    setShowAddJamaahModal(false);
+    setForm(EMPTY);
+    setKtp(null);
+    setPassport(null);
+    close();
   };
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto font-sans">
-      <div
-        className={`rounded-2xl max-w-lg w-full p-6 shadow-2xl border my-6 transition-colors ${
-          isDark
-            ? 'bg-[#22211f] border-[#33312e] text-[#f4f3ef]'
-            : 'bg-white border-[#dedbd2] text-[#23211e]'
-        }`}
-      >
-        {/* Header */}
-        <div
-          className={`flex items-center justify-between pb-3 border-b mb-4 ${
-            isDark ? 'border-[#2d2c29]' : 'border-[#eeece6]'
-          }`}
-        >
-          <div>
-            <h2 className="text-base font-bold">
-              Pendaftaran Cepat Jamaah Umroh
-            </h2>
-            <p
-              className={`text-xs mt-0.5 ${
-                isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-              }`}
-            >
-              Hanya <strong className="text-[#f27244]">Nama</strong> &amp; <strong className="text-[#f27244]">No. HP</strong> yang wajib. Data lain bisa dilengkapi belakangan.
-            </p>
-          </div>
-          <button
-            onClick={() => setShowAddJamaahModal(false)}
-            className={`p-1 rounded-md transition-colors ${
-              isDark ? 'text-[#737069] hover:text-[#f4f3ef]' : 'text-[#9c988f] hover:text-[#23211e]'
-            }`}
-          >
-            <X className="w-5 h-5" />
-          </button>
+    <Modal
+      open={showAddJamaahModal}
+      onClose={close}
+      title="Pendaftaran cepat"
+      description="Hanya nama & no. HP yang wajib. Data lain bisa dilengkapi belakangan."
+      icon={UserPlus}
+      footer={
+        <>
+          <Button variant="ghost" onClick={close}>
+            Batal
+          </Button>
+          <Button variant="primary" type="submit" form="add-jamaah-form">
+            Simpan Pendaftaran
+          </Button>
+        </>
+      }
+    >
+      <form id="add-jamaah-form" onSubmit={submit} className="space-y-5">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Field label={<>Nama lengkap <span className="text-accent">*</span></>}>
+            <input
+              className="input"
+              required
+              autoFocus
+              placeholder="Muhammad Ridwan Ashari"
+              value={form.fullName}
+              onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+            />
+          </Field>
+          <Field label={<>No. WhatsApp <span className="text-accent">*</span></>}>
+            <input
+              className="input font-mono"
+              required
+              inputMode="tel"
+              placeholder="0813xxxxxxxx"
+              value={form.phoneWhatsapp}
+              onChange={(e) => setForm({ ...form, phoneWhatsapp: e.target.value })}
+            />
+          </Field>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          {/* WAJIB: Nama & No HP */}
-          <div
-            className={`p-3.5 rounded-xl border space-y-3 ${
-              isDark
-                ? 'bg-[#1a1918] border-[#3d2e24]'
-                : 'bg-[#fffbf7] border-[#fed7c8]'
-            }`}
-          >
-            <div>
-              <label className="block font-bold mb-1">
-                Nama Lengkap Jamaah <span className="text-[#f27244]">* Wajib</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Contoh: Muhammad Ridwan Ashari"
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                className={`w-full p-2.5 rounded-lg border font-semibold focus:outline-none focus:ring-1 focus:ring-[#f27244] text-sm ${
-                  isDark
-                    ? 'bg-[#252422] border-[#383633] text-white'
-                    : 'bg-white border-[#dedbd2] text-[#23211e]'
-                }`}
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold mb-1">
-                Nomor WhatsApp / HP <span className="text-[#f27244]">* Wajib</span>
-              </label>
-              <input
-                type="text"
-                required
-                placeholder="Contoh: 081328313731"
-                value={phoneWhatsapp}
-                onChange={(e) => setPhoneWhatsapp(e.target.value)}
-                className={`w-full p-2.5 rounded-lg border font-mono font-bold text-[#f27244] focus:outline-none focus:ring-1 focus:ring-[#f27244] text-sm ${
-                  isDark
-                    ? 'bg-[#252422] border-[#383633]'
-                    : 'bg-white border-[#dedbd2]'
-                }`}
-              />
-            </div>
+        <div>
+          <span className="field-label">Paket umroh</span>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {packages.map((p) => {
+              const active = p.id === pkg?.id;
+              const c = p.kanbanColors.accent;
+              return (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setPkgId(p.id)}
+                  className={cx('rounded-2xl border p-3 text-left transition-all', active ? 'ring-2' : 'border-line hover:bg-subtle')}
+                  style={active ? ({ borderColor: c, '--tw-ring-color': `color-mix(in srgb, ${c} 20%, transparent)` } as React.CSSProperties) : undefined}
+                >
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold" style={{ color: c }}>
+                    <span className="size-1.5 rounded-full" style={{ backgroundColor: c }} />
+                    {p.departureMonth}
+                  </div>
+                  <div className="mt-1 text-[13px] leading-snug font-semibold text-ink">{p.name.replace(/^Umroh\s+/, '')}</div>
+                  <div className="num mt-1.5 text-xs font-bold text-muted">{formatRupiah(p.price)}</div>
+                </button>
+              );
+            })}
           </div>
+        </div>
 
-          {/* Program Paket Umroh (3 Choices with Kanban Color indicators) */}
-          <div>
-            <label
-              className={`block font-medium mb-1 ${
-                isDark ? 'text-[#d6d3cb]' : 'text-[#5c5953]'
-              }`}
-            >
-              Pilih Paket Umroh
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {packages.map((p) => {
-                const isSelected = selectedPkgId === p.id;
-                const pkgKc = p.kanbanColors;
+        <Field label="DP / booking seat (opsional)" hint={`Total biaya paket ${formatRupiah(pkg?.price || 0)}`}>
+          <input className="input num font-semibold" type="number" min={0} step={500000} value={dp} onChange={(e) => setDp(Number(e.target.value))} />
+        </Field>
 
-                return (
-                  <button
-                    key={p.id}
-                    type="button"
-                    onClick={() => setSelectedPkgId(p.id)}
-                    className="p-2.5 rounded-xl border text-left transition-all relative flex flex-col justify-between"
-                    style={{
-                      borderColor: isSelected
-                        ? pkgKc.accent
-                        : isDark ? '#33312e' : '#e0ddd4',
-                      backgroundColor: isSelected
-                        ? isDark ? pkgKc.badgeBgDark : pkgKc.badgeBgLight
-                        : isDark ? '#1a1918' : '#faf9f6',
-                    }}
-                  >
-                    <div>
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="w-2 h-2 rounded-full" style={{ backgroundColor: pkgKc.dotColor }} />
-                        <span
-                          className="text-[10px] font-mono font-bold"
-                          style={{ color: isSelected ? pkgKc.accent : undefined }}
-                        >
-                          {p.departureMonth}
-                        </span>
-                      </div>
-                      <div className="font-bold text-xs leading-tight line-clamp-1">
-                        {p.name.replace('Umroh ', '')}
-                      </div>
-                    </div>
-                    <div
-                      className="font-price-myriad font-bold text-xs mt-2"
-                      style={{ color: pkgKc.accent }}
-                    >
-                      {formatRupiah(p.price)}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* DP Pendaftaran (Booking Seat) */}
-          <div>
-            <label
-              className={`block font-medium mb-1 ${
-                isDark ? 'text-[#d6d3cb]' : 'text-[#5c5953]'
-              }`}
-            >
-              DP / Booking Seat (IDR) - Opsional (Myriad Bold)
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="500000"
-              value={downPayment}
-              onChange={(e) => setDownPayment(Number(e.target.value))}
-              className={`w-full p-2 rounded-lg border font-bold font-price-myriad text-[#f27244] ${
-                isDark
-                  ? 'bg-[#1a1918] border-[#33312e]'
-                  : 'bg-[#faf9f6] border-[#dedbd2]'
-              }`}
-            />
-            <div
-              className={`text-[10px] mt-1 ${
-                isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-              }`}
-            >
-              Total biaya paket: <span className="font-price-myriad font-bold">{formatRupiah(currentPkg?.price || 0)}</span>
-            </div>
-          </div>
-
-          {/* Optional Expandable Button */}
-          <div className="pt-1">
-            <button
-              type="button"
-              onClick={() => setShowOptionalFields(!showOptionalFields)}
-              className="text-xs text-[#f27244] hover:text-[#ff8559] font-semibold flex items-center gap-1 transition-colors"
-            >
-              <span>{showOptionalFields ? '− Sembunyikan Upload & Data Tambahan' : '+ Upload KTP / Paspor & Data Tambahan (Opsional)'}</span>
-            </button>
-          </div>
-
-          {/* Expandable Optional Fields */}
-          {showOptionalFields && (
-            <div
-              className={`p-3.5 rounded-xl border space-y-3 pt-3 transition-colors ${
-                isDark
-                  ? 'bg-[#1a1918] border-[#33312e]'
-                  : 'bg-[#faf9f6] border-[#e2dfd7]'
-              }`}
-            >
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label
-                    className={`block font-medium mb-1 ${
-                      isDark ? 'text-[#a6a39b]' : 'text-[#6b6760]'
-                    }`}
-                  >
-                    NIK KTP (16 Digit)
-                  </label>
+        <div className="rounded-2xl border border-line">
+          <button type="button" onClick={() => setMore(!more)} className="flex w-full items-center justify-between px-4 py-3 text-[13px] font-semibold text-ink">
+            Data tambahan & upload KTP / paspor
+            <ChevronDown className={cx('size-4 text-muted transition-transform', more && 'rotate-180')} />
+          </button>
+          {more && (
+            <div className="space-y-4 border-t border-line p-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <Field label="NIK (16 digit)">
+                  <input className="input font-mono" maxLength={16} placeholder="347101…" value={form.nik} onChange={(e) => setForm({ ...form, nik: e.target.value })} />
+                </Field>
+                <Field label="No. paspor">
                   <input
-                    type="text"
-                    maxLength={16}
-                    placeholder="347101..."
-                    value={nik}
-                    onChange={(e) => setNik(e.target.value)}
-                    className={`w-full p-2 rounded-lg border font-mono ${
-                      isDark
-                        ? 'bg-[#252422] border-[#33312e] text-[#f4f3ef]'
-                        : 'bg-white border-[#dedbd2] text-[#23211e]'
-                    }`}
-                  />
-                </div>
-                <div>
-                  <label
-                    className={`block font-medium mb-1 ${
-                      isDark ? 'text-[#a6a39b]' : 'text-[#6b6760]'
-                    }`}
-                  >
-                    Nomor Paspor
-                  </label>
-                  <input
-                    type="text"
+                    className="input font-mono uppercase"
                     placeholder="X1892041"
-                    value={passportNumber}
-                    onChange={(e) => setPassportNumber(e.target.value)}
-                    className={`w-full p-2 rounded-lg border font-mono uppercase ${
-                      isDark
-                        ? 'bg-[#252422] border-[#33312e] text-[#f4f3ef]'
-                        : 'bg-white border-[#dedbd2] text-[#23211e]'
-                    }`}
+                    value={form.passportNumber}
+                    onChange={(e) => setForm({ ...form, passportNumber: e.target.value })}
                   />
-                </div>
+                </Field>
+                <Field label="Kota">
+                  <input className="input" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+                </Field>
               </div>
-
-              {/* Upload Scan KTP & Paspor */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                {/* Upload KTP */}
-                <div
-                  className={`p-2.5 rounded-lg border ${
-                    isDark ? 'bg-[#252422] border-[#33312e]' : 'bg-white border-[#dedbd2]'
-                  }`}
-                >
-                  <div className="font-semibold mb-1 flex items-center gap-1">
-                    <Upload className="w-3.5 h-3.5 text-[#f27244]" />
-                    <span>Upload KTP</span>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={handleKtpUpload}
-                    className="text-[10px] w-full"
-                  />
-                  {ktpFileName && (
-                    <div className="text-[10px] text-emerald-500 font-medium truncate mt-1">
-                      ✓ {ktpFileName}
-                    </div>
-                  )}
-                </div>
-
-                {/* Upload Paspor */}
-                <div
-                  className={`p-2.5 rounded-lg border ${
-                    isDark ? 'bg-[#252422] border-[#33312e]' : 'bg-white border-[#dedbd2]'
-                  }`}
-                >
-                  <div className="font-semibold mb-1 flex items-center gap-1">
-                    <Upload className="w-3.5 h-3.5 text-[#f27244]" />
-                    <span>Upload Paspor</span>
-                  </div>
-                  <input
-                    type="file"
-                    accept="image/*,.pdf"
-                    onChange={handlePassportUpload}
-                    className="text-[10px] w-full"
-                  />
-                  {passportFileName && (
-                    <div className="text-[10px] text-emerald-500 font-medium truncate mt-1">
-                      ✓ {passportFileName}
-                    </div>
-                  )}
-                </div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <UploadTile label="Scan KTP" file={ktp?.name} onChange={(e) => pick(e, setKtp)} />
+                <UploadTile label="Scan paspor" file={passport?.name} onChange={(e) => pick(e, setPassport)} />
               </div>
             </div>
           )}
-
-          {/* Buttons */}
-          <div
-            className={`pt-3 border-t flex items-center justify-end gap-2 ${
-              isDark ? 'border-[#2d2c29]' : 'border-[#eeece6]'
-            }`}
-          >
-            <button
-              type="button"
-              onClick={() => setShowAddJamaahModal(false)}
-              className={`px-3.5 py-2 rounded-lg font-medium transition-colors ${
-                isDark ? 'text-[#9c988f] hover:bg-[#282725]' : 'text-[#737069] hover:bg-[#f0ede6]'
-              }`}
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              className="px-5 py-2 bg-[#f27244] hover:bg-[#e06336] text-white rounded-lg font-semibold shadow-xs transition-colors"
-            >
-              Simpan Pendaftaran
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        </div>
+      </form>
+    </Modal>
   );
 };
+
+export const UploadTile: React.FC<{
+  label: string;
+  file?: string;
+  preview?: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}> = ({ label, file, preview, onChange }) => (
+  <label
+    className={cx(
+      'flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed p-3 transition-colors hover:border-accent',
+      file ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-line-strong'
+    )}
+  >
+    <input type="file" accept="image/*,.pdf" onChange={onChange} className="hidden" />
+    {preview && preview.startsWith('data:image') ? (
+      <img src={preview} alt={label} className="size-12 shrink-0 rounded-xl object-cover" />
+    ) : (
+      <span
+        className={cx(
+          'flex size-12 shrink-0 items-center justify-center rounded-xl',
+          file ? 'bg-emerald-500/10 text-emerald-600' : 'bg-subtle text-faint'
+        )}
+      >
+        {file ? <FileCheck2 className="size-5" /> : <Upload className="size-5" />}
+      </span>
+    )}
+    <span className="min-w-0">
+      <span className="block text-[13px] font-semibold text-ink">{label}</span>
+      <span className="block truncate text-[11px] text-muted">{file || 'Klik untuk unggah (gambar / PDF)'}</span>
+    </span>
+  </label>
+);

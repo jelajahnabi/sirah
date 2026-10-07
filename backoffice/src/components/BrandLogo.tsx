@@ -1,97 +1,54 @@
 import React from 'react';
 import { useApp } from '../context/AppContext';
-import { Upload } from 'lucide-react';
+import { cx } from './ui';
 
-interface BrandLogoProps {
+/** Logo travel: memakai logo unggahan bila ada, selain itu lockup tipografi. */
+export const BrandLogo: React.FC<{
   className?: string;
-  showUploadPrompt?: boolean;
-  compact?: boolean;
-}
+  /** Tampilkan teks nama di samping ikon (lockup default). */
+  withText?: boolean;
+  /** Paksa warna terang (untuk header gelap pada dokumen cetak). */
+  inverted?: boolean;
+  onClick?: () => void;
+}> = ({ className = 'h-9', withText = true, inverted, onClick }) => {
+  const { customLogo } = useApp();
 
-export const BrandLogo: React.FC<BrandLogoProps> = ({
-  className = 'h-9',
-  showUploadPrompt = true,
-  compact = false,
-}) => {
-  const { customLogo, setIsLogoModalOpen, theme } = useApp();
-  const isDark = theme === 'dark';
+  if (customLogo) {
+    return (
+      <img
+        src={customLogo}
+        alt="Logo PT Mudahkebaitullah Travel Indonesia"
+        onClick={onClick}
+        className={cx(className, 'w-auto max-w-[180px] object-contain', onClick && 'cursor-pointer')}
+      />
+    );
+  }
 
   return (
-    <div className="flex items-center gap-2.5">
-      {customLogo ? (
-        <div
-          onClick={() => setIsLogoModalOpen(true)}
-          className="group relative cursor-pointer flex items-center transition-transform hover:opacity-95"
-          title="Klik untuk mengubah atau menghapus logo resmi"
-        >
-          <img
-            src={customLogo}
-            alt="Logo PT MUDAHKEBAITULLAH TRAVEL INDONESIA"
-            className={`${className} w-auto object-contain max-w-[200px] rounded-xs`}
-          />
-          {showUploadPrompt && (
-            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center rounded-xs transition-opacity">
-              <span className="text-[9px] text-white font-medium bg-black/70 px-1.5 py-0.5 rounded flex items-center gap-1">
-                <Upload className="w-2.5 h-2.5" /> Ganti
-              </span>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* Typographic Corporate Lockup (Clean, Minimalist, Elegant) */
-        <div
-          onClick={() => setIsLogoModalOpen(true)}
-          className="group cursor-pointer flex items-center gap-2 select-none"
-          title="Klik untuk mengunggah logo resmi (PNG/JPG)"
-        >
-          <div className="flex flex-col">
-            <div className="flex items-center gap-1.5">
-              <span
-                className={`font-black tracking-tight text-xs uppercase leading-none font-sans ${
-                  isDark ? 'text-[#f4f3ef]' : 'text-[#23211e]'
-                }`}
-              >
-                MUDAHKEBAITULLAH
-              </span>
-            </div>
-            {!compact && (
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-[9px] tracking-wider font-bold text-[#f27244] uppercase font-mono">
-                  TRAVEL INDONESIA
-                </span>
-                <span
-                  className={`text-[8px] font-mono px-1 py-0.2 rounded border ${
-                    isDark
-                      ? 'border-[#383633] text-[#8c8982] bg-[#22211f]'
-                      : 'border-[#dedbd2] text-[#858178] bg-[#f5f4f0]'
-                  }`}
-                >
-                  YOGYA
-                </span>
-              </div>
-            )}
+    <div className={cx('flex items-center gap-2.5 select-none', onClick && 'cursor-pointer')} onClick={onClick}>
+      <BrandMark className={className} />
+      {withText && (
+        <div className="leading-none">
+          <div className={cx('text-[13px] font-extrabold tracking-tight', inverted ? 'text-white' : 'text-ink')}>
+            MudahKeBaitullah
           </div>
-
-          {showUploadPrompt && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsLogoModalOpen(true);
-              }}
-              className={`p-1 rounded-md text-[10px] border transition-all flex items-center gap-1 opacity-70 group-hover:opacity-100 ${
-                isDark
-                  ? 'border-[#383633] text-[#9c988f] hover:text-[#f27244] hover:border-[#f27244]/40 bg-[#252422]'
-                  : 'border-[#d8d5cb] text-[#737069] hover:text-[#f27244] hover:border-[#f27244]/40 bg-white'
-              }`}
-              title="Unggah logo resmi perusahaan"
-            >
-              <Upload className="w-3 h-3 text-[#f27244]" />
-              <span className="hidden sm:inline text-[9px] font-semibold">+Logo</span>
-            </button>
-          )}
+          <div className={cx('mt-1 text-[10px] font-semibold tracking-[0.14em] uppercase', inverted ? 'text-white/60' : 'text-faint')}>
+            Travel Indonesia
+          </div>
         </div>
       )}
     </div>
   );
 };
+
+/** Ikon ka'bah sederhana dalam kotak membulat. */
+export const BrandMark: React.FC<{ className?: string }> = ({ className = 'h-9' }) => (
+  <span className={cx('flex aspect-square shrink-0 items-center justify-center rounded-xl bg-accent text-white', className)}>
+    <svg viewBox="0 0 24 24" className="h-[55%] w-[55%]" fill="none" aria-hidden="true">
+      <path d="M4 8.5 12 5l8 3.5v9L12 21l-8-3.5v-9Z" fill="currentColor" opacity=".25" />
+      <path d="M4 8.5 12 12l8-3.5M12 12v9" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M4 8.5 12 5l8 3.5v9L12 21l-8-3.5v-9Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+      <path d="M4 11.2 12 14.7l8-3.5" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  </span>
+);

@@ -1,24 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { COMPANY_INFO } from '../../data/mockData';
-import { BrandLogo } from '../BrandLogo';
-import {
-  Lock,
-  User,
-  ArrowRight,
-  ShieldCheck,
-  Sun,
-  Moon,
-  Sparkles,
-  KeyRound,
-  AlertCircle,
-  Building,
-} from 'lucide-react';
+import { BrandLogo, BrandMark } from '../BrandLogo';
+import { Button, IconButton } from '../ui';
+import { AlertCircle, ArrowRight, Lock, Moon, ShieldCheck, Sun, User } from 'lucide-react';
 
 export const LoginView: React.FC = () => {
-  const { login, theme, toggleTheme } = useApp();
-  const isDark = theme === 'dark';
-
+  const { login, theme, toggleTheme, packages, jamaahList } = useApp();
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('adminmkb');
   const [error, setError] = useState<string | null>(null);
@@ -28,202 +16,132 @@ export const LoginView: React.FC = () => {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
     setTimeout(() => {
-      const success = login(username.trim(), password.trim());
-      if (!success) {
-        setError('Username atau password salah. Silakan periksa kembali (Gunakan: admin / adminmkb)');
+      if (!login(username.trim(), password.trim())) {
+        setError('Username atau password salah. Akun demo: admin / adminmkb.');
       }
       setLoading(false);
     }, 300);
   };
 
-  const handleFillDemo = () => {
-    setUsername('admin');
-    setPassword('adminmkb');
-    setError(null);
-  };
-
   return (
-    <div
-      className={`min-h-screen flex flex-col justify-between p-4 sm:p-6 font-sans transition-colors duration-200 select-none ${
-        isDark ? 'bg-[#181716] text-[#f4f3ef]' : 'bg-[#f7f6f2] text-[#23211e]'
-      }`}
-    >
-      {/* Top Bar with Brand & Theme Toggle */}
-      <header className="max-w-6xl w-full mx-auto flex items-center justify-between py-2">
-        <div className="flex items-center gap-2">
-          <BrandLogo className="h-8" />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={toggleTheme}
-            className={`p-2 rounded-xl border transition-colors ${
-              isDark
-                ? 'bg-[#242321] hover:bg-[#2c2b28] border-[#383633] text-amber-400'
-                : 'bg-white hover:bg-[#f4f3ee] border-[#dedbd2] text-indigo-600 shadow-2xs'
-            }`}
-            title={isDark ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
-          >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
-          </button>
-        </div>
-      </header>
-
-      {/* Main Login Card */}
-      <main className="flex-1 flex items-center justify-center p-2">
+    <div className="grid min-h-screen bg-canvas lg:grid-cols-[1.05fr_1fr]">
+      {/* Panel kiri — identitas */}
+      <aside className="relative hidden overflow-hidden bg-night p-10 text-night-ink lg:flex lg:flex-col lg:justify-between">
         <div
-          className={`w-full max-w-md rounded-2xl border p-7 sm:p-8 shadow-2xl transition-all ${
-            isDark
-              ? 'bg-[#22211f] border-[#383633] shadow-[0_10px_35px_rgba(0,0,0,0.5)]'
-              : 'bg-white border-[#e5e2da] shadow-[0_10px_30px_rgba(0,0,0,0.06)]'
-          }`}
-        >
-          {/* Card Header */}
-          <div className="text-center space-y-2 mb-6">
-            <div className="w-12 h-12 mx-auto rounded-2xl bg-[#f27244]/15 text-[#f27244] flex items-center justify-center shadow-xs">
-              <KeyRound className="w-6 h-6" />
-            </div>
-
-            <h1 className="text-lg font-bold tracking-tight">
-              Sistem Operasional Backoffice
-            </h1>
-            <p
-              className={`text-xs ${
-                isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-              }`}
-            >
-              {COMPANY_INFO.legalName}
-            </p>
+          className="pointer-events-none absolute -top-40 -right-40 size-[520px] rounded-full opacity-30 blur-3xl"
+          style={{ background: 'radial-gradient(circle, var(--accent), transparent 65%)' }}
+        />
+        <div className="relative flex items-center gap-3">
+          <BrandMark className="h-10" />
+          <div>
+            <div className="text-sm font-extrabold">MudahKeBaitullah</div>
+            <div className="text-[11px] tracking-[0.14em] text-night-muted uppercase">Travel Indonesia</div>
           </div>
+        </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-            {error && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{error}</span>
+        <div className="relative max-w-md">
+          <p className="text-xs font-semibold tracking-[0.14em] text-accent uppercase">Backoffice operasional</p>
+          <h1 className="mt-3 text-4xl leading-tight font-bold tracking-tight">
+            Semua urusan jamaah, dari daftar sampai pulang, di satu tempat.
+          </h1>
+          <p className="mt-4 text-sm leading-relaxed text-night-muted">
+            Paket & kuota, berkas jamaah, manifest, rooming list, kwitansi, sampai pengiriman koper.
+          </p>
+
+          <div className="mt-8 grid grid-cols-3 gap-3">
+            {[
+              { v: packages.length, l: 'Paket aktif' },
+              { v: jamaahList.length, l: 'Jamaah' },
+              { v: 'PPIU', l: 'Kemenhaj RI' },
+            ].map((s) => (
+              <div key={s.l} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <div className="num text-2xl font-bold">{s.v}</div>
+                <div className="mt-1 text-[11px] text-night-muted">{s.l}</div>
               </div>
-            )}
+            ))}
+          </div>
+        </div>
 
-            <div>
-              <label
-                className={`block font-semibold mb-1.5 ${
-                  isDark ? 'text-[#d6d3cb]' : 'text-[#4a4740]'
-                }`}
-              >
-                Username
-              </label>
-              <div className="relative">
-                <User
-                  className={`w-4 h-4 absolute left-3 top-3 ${
-                    isDark ? 'text-[#737069]' : 'text-[#9c988f]'
-                  }`}
-                />
-                <input
-                  type="text"
-                  required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder="admin"
-                  className={`w-full pl-9 pr-3.5 py-2.5 rounded-xl border text-sm font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-[#f27244] ${
-                    isDark
-                      ? 'bg-[#1a1918] border-[#383633] text-white placeholder-[#737069]'
-                      : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e] placeholder-[#a6a39b]'
-                  }`}
-                />
-              </div>
-            </div>
+        <div className="relative text-xs text-night-muted">
+          © {new Date().getFullYear()} {COMPANY_INFO.legalName} · Yogyakarta
+        </div>
+      </aside>
 
-            <div>
-              <label
-                className={`block font-semibold mb-1.5 ${
-                  isDark ? 'text-[#d6d3cb]' : 'text-[#4a4740]'
-                }`}
-              >
-                Password
-              </label>
-              <div className="relative">
-                <Lock
-                  className={`w-4 h-4 absolute left-3 top-3 ${
-                    isDark ? 'text-[#737069]' : 'text-[#9c988f]'
-                  }`}
-                />
-                <input
-                  type="password"
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="adminmkb"
-                  className={`w-full pl-9 pr-3.5 py-2.5 rounded-xl border text-sm font-medium transition-colors focus:outline-none focus:ring-1 focus:ring-[#f27244] ${
-                    isDark
-                      ? 'bg-[#1a1918] border-[#383633] text-white placeholder-[#737069]'
-                      : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e] placeholder-[#a6a39b]'
-                  }`}
-                />
-              </div>
-            </div>
+      {/* Panel kanan — form */}
+      <main className="flex flex-col p-6 sm:p-10">
+        <div className="flex items-center justify-between">
+          <div className="lg:invisible">
+            <BrandLogo className="h-9" />
+          </div>
+          <IconButton icon={theme === 'dark' ? Sun : Moon} label="Ganti tema" onClick={toggleTheme} />
+        </div>
 
-            {/* Quick Demo Helper Hint */}
-            <div
-              className={`p-3 rounded-xl border text-[11px] flex items-center justify-between ${
-                isDark
-                  ? 'bg-[#1a1918] border-[#2e2d2a] text-[#a6a39b]'
-                  : 'bg-[#faf9f6] border-[#eae7df] text-[#6b6760]'
-              }`}
-            >
-              <div>
-                <span className="font-semibold block text-[#f27244]">Kredensial Login Template:</span>
-                <span>User: <strong>admin</strong> | Pass: <strong>adminmkb</strong></span>
-              </div>
-              <button
-                type="button"
-                onClick={handleFillDemo}
-                className="px-2 py-1 text-[10px] font-semibold text-[#f27244] bg-[#f27244]/10 hover:bg-[#f27244]/20 rounded-md transition-colors"
-              >
-                Isi Otomatis
-              </button>
-            </div>
+        <div className="flex flex-1 items-center justify-center py-10">
+          <div className="w-full max-w-sm">
+            <h2 className="text-2xl font-bold tracking-tight text-ink">Masuk ke backoffice</h2>
+            <p className="mt-1.5 text-sm text-muted">Gunakan akun staf yang terdaftar.</p>
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-2.5 bg-[#f27244] hover:bg-[#e06336] text-white rounded-xl text-sm font-semibold shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer mt-2"
-            >
-              {loading ? (
-                <span>Memproses...</span>
-              ) : (
-                <>
-                  <span>Masuk ke Backoffice</span>
-                  <ArrowRight className="w-4 h-4" />
-                </>
+            <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+              {error && (
+                <div className="flex items-start gap-2 rounded-xl bg-rose-500/10 p-3 text-xs font-medium text-rose-700 dark:text-rose-400">
+                  <AlertCircle className="mt-0.5 size-4 shrink-0" />
+                  {error}
+                </div>
               )}
-            </button>
-          </form>
 
-          {/* Footer note */}
-          <div
-            className={`mt-6 pt-4 border-t text-center text-[10px] flex items-center justify-center gap-1.5 ${
-              isDark ? 'border-[#2d2c29] text-[#737069]' : 'border-[#eeece6] text-[#8c8982]'
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Sistem Terenkripsi &amp; Terlindungi PPIU Kemenhaj RI</span>
+              <label className="block">
+                <span className="field-label">Username</span>
+                <div className="relative">
+                  <User className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint" />
+                  <input className="input h-11 pl-9" required value={username} onChange={(e) => setUsername(e.target.value)} />
+                </div>
+              </label>
+
+              <label className="block">
+                <span className="field-label">Password</span>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-faint" />
+                  <input
+                    className="input h-11 pl-9"
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                </div>
+              </label>
+
+              <Button type="submit" variant="primary" disabled={loading} className="h-11 w-full">
+                {loading ? 'Memproses…' : 'Masuk'}
+                {!loading && <ArrowRight className="size-4" />}
+              </Button>
+
+              <div className="flex items-center justify-between rounded-xl border border-dashed border-line-strong px-3.5 py-3 text-xs">
+                <span className="text-muted">
+                  Akun demo: <strong className="text-ink">admin</strong> / <strong className="text-ink">adminmkb</strong>
+                </span>
+                <button
+                  type="button"
+                  className="font-semibold text-accent hover:underline"
+                  onClick={() => {
+                    setUsername('admin');
+                    setPassword('adminmkb');
+                    setError(null);
+                  }}
+                >
+                  Isi otomatis
+                </button>
+              </div>
+            </form>
+
+            <div className="mt-10 flex items-center gap-2 text-xs text-faint">
+              <ShieldCheck className="size-4 text-emerald-500" />
+              Terdaftar resmi sebagai PPIU Kemenhaj RI
+            </div>
           </div>
         </div>
       </main>
-
-      {/* Footer copyright */}
-      <footer
-        className={`max-w-6xl w-full mx-auto text-center text-xs py-3 ${
-          isDark ? 'text-[#737069]' : 'text-[#9c988f]'
-        }`}
-      >
-        &copy; {new Date().getFullYear()} {COMPANY_INFO.legalName} · Yogyakarta, Indonesia
-      </footer>
     </div>
   );
 };

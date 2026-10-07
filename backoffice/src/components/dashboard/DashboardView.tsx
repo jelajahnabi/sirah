@@ -1,47 +1,103 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useApp } from '../../context/AppContext';
 import { formatRupiah, formatDateIndo, exportToXlsx } from '../../utils/formatters';
 import {
-  Users,
-  Receipt,
-  FileText,
-  UserPlus,
-  ArrowRight,
-  Download,
-  AlertCircle,
-  CheckCircle2,
-  Phone,
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  CardHeader,
+  KeyValue,
+  PackageTag,
+  PageHeader,
+  Progress,
+  StatCard,
+  paymentTone,
+  visaTone,
+  cx,
+} from '../ui';
+import {
+  AlertTriangle,
+  ArrowUpRight,
+  CalendarClock,
   FileSpreadsheet,
-  Clock,
-  Sparkles,
-  Kanban,
+  Plane,
   Plus,
-  Settings,
   SlidersHorizontal,
+  Users,
+  Wallet,
+  Receipt,
+  BarChart3,
+  ShieldCheck,
 } from 'lucide-react';
+
+const juta = (n: number) => {
+  if (n >= 1e9) return `${(n / 1e9).toFixed(1).replace('.', ',')} M`;
+  if (n >= 1e6) return `${Math.round(n / 1e6)} jt`;
+  return formatRupiah(n);
+};
 
 export const DashboardView: React.FC = () => {
   const {
     packages,
     jamaahList,
     transactions,
+    departureGroups,
+    currentUser,
     setCurrentTab,
-    setShowAddJamaahModal,
     setShowAddPackageModal,
     setShowManagePackageModal,
     setSelectedJamaah,
     setSelectedPackageDetail,
-    theme,
   } = useApp();
 
-  const isDark = theme === 'dark';
-  const totalJamaah = jamaahList.length;
-  const totalRevenue = transactions.reduce((acc, t) => acc + t.amount, 0);
-  const totalReceivables = jamaahList.reduce(
-    (acc, j) => acc + (j.totalCost - j.amountPaid),
-    0
+  const totalRevenue = transactions.reduce((a, t) => a + t.amount, 0);
+  const totalReceivables = jamaahList.reduce((a, j) => a + (j.totalCost - j.amountPaid), 0);
+  const completeCount = jamaahList.filter((j) => j.isDataComplete).length;
+  const incompleteCount = jamaahList.length - completeCount;
+
+  const perPackage = useMemo(
+    () =>
+      packages.map((p) => {
+        const list = jamaahList.filter((j) => j.packageId === p.id);
+        return {
+          pkg: p,
+          paid: list.reduce((a, j) => a + j.amountPaid, 0),
+          target: list.reduce((a, j) => a + j.totalCost, 0),
+          count: list.length,
+        };
+      }),
+    [packages, jamaahList]
   );
-  const incompleteCount = jamaahList.filter((j) => !j.isDataComplete).length;
+  const chartMax = Math.max(1, ...perPackage.map((r) => r.target));
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const nextGroup =
+    [...departureGroups]
+      .filter((g) => new Date(g.departureDate) >= today)
+      .sort((a, b) => a.departureDate.localeCompare(b.departureDate))[0] || departureGroups[0];
+  const daysLeft = nextGroup
+    ? Math.max(0, Math.ceil((new Date(nextGroup.departureDate).getTime() - today.getTime()) / 86400000))
+    : 0;
+  const nextGroupPax = nextGroup ? jamaahList.filter((j) => j.packageId === nextGroup.packageId).length : 0;
+
+  const visaCounts = (['Issued', 'Proses Enjaz', 'Belum Proses', 'Reject'] as const).map((s) => ({
+    status: s,
+    count: jamaahList.filter((j) => j.visaStatus === s).length,
+  }));
+  const visaColor: Record<string, string> = {
+    Issued: '#10b981',
+    'Proses Enjaz': '#0ea5e9',
+    'Belum Proses': 'var(--line-strong)',
+    Reject: '#f43f5e',
+  };
+  const pct = (n: number) => (jamaahList.length ? Math.round((n / jamaahList.length) * 100) : 0);
+  const docRows = [
+    { label: 'Scan KTP', value: pct(jamaahList.filter((j) => j.documentStatus.ktpUploaded).length) },
+    { label: 'Scan paspor', value: pct(jamaahList.filter((j) => j.documentStatus.passportUploaded).length) },
+    { label: 'Data lengkap', value: pct(completeCount) },
+  ];
 
   const handleExportXlsx = () => {
     const headers = [
@@ -57,563 +113,330 @@ export const DashboardView: React.FC = () => {
       'TERBAYAR',
       'SISA TAGIHAN',
     ];
-
-    const rows = jamaahList.map((j) => {
-      const pkg = packages.find((p) => p.id === j.packageId);
-      return [
-        j.fullName,
-        j.phoneWhatsapp,
-        pkg ? pkg.name : '-',
-        j.departureDate || '-',
-        j.isDataComplete ? 'Lengkap' : 'Belum Lengkap',
-        j.documentStatus.ktpUploaded ? 'Sudah Upload' : 'Belum',
-        j.documentStatus.passportUploaded ? 'Sudah Upload' : 'Belum',
-        j.paymentStatus,
-        j.totalCost,
-        j.amountPaid,
-        j.totalCost - j.amountPaid,
-      ];
-    });
-
+    const rows = jamaahList.map((j) => [
+      j.fullName,
+      j.phoneWhatsapp,
+      packages.find((p) => p.id === j.packageId)?.name || '-',
+      j.departureDate || '-',
+      j.isDataComplete ? 'Lengkap' : 'Belum Lengkap',
+      j.documentStatus.ktpUploaded ? 'Sudah Upload' : 'Belum',
+      j.documentStatus.passportUploaded ? 'Sudah Upload' : 'Belum',
+      j.paymentStatus,
+      j.totalCost,
+      j.amountPaid,
+      j.totalCost - j.amountPaid,
+    ]);
     exportToXlsx('Data_Jamaah_MKB_Travel', headers, rows);
   };
 
+  const firstName = (currentUser?.name || 'Admin').split(' ')[0];
+
   return (
-    <div className="space-y-6 font-sans">
-      {/* Sunsama Quick Actions Bar */}
-      <div
-        className={`p-4 rounded-xl border shadow-xs transition-colors flex flex-col md:flex-row md:items-center justify-between gap-3 ${
-          isDark
-            ? 'bg-[#22211f] border-[#383633]'
-            : 'bg-white border-[#dedbd2]'
-        }`}
-      >
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-[#f27244]/15 text-[#f27244] flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4" />
-          </div>
-          <div>
-            <h2 className="text-xs font-bold uppercase tracking-wider">
-              Aksi Cepat Backoffice
-            </h2>
-            <p
-              className={`text-[11px] ${
-                isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-              }`}
-            >
-              Pendaftaran instan, tambah program umroh baru, dan kelola status kuota.
-            </p>
-          </div>
-        </div>
+    <div className="space-y-6">
+      <PageHeader
+        title={`Assalamu'alaikum, ${firstName}`}
+        description="Ringkasan operasional hari ini: jamaah, pembayaran, dan keberangkatan terdekat."
+        actions={
+          <>
+            <Button icon={FileSpreadsheet} onClick={handleExportXlsx}>
+              Export Excel
+            </Button>
+            <Button icon={SlidersHorizontal} onClick={() => setShowManagePackageModal(true)}>
+              Kelola Paket
+            </Button>
+            <Button variant="primary" icon={Plus} onClick={() => setShowAddPackageModal(true)}>
+              Paket Baru
+            </Button>
+          </>
+        }
+      />
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Quick Action 1: Pendaftaran Cepat */}
-          <button
-            onClick={() => setShowAddJamaahModal(true)}
-            className="px-3.5 py-2 bg-[#f27244] hover:bg-[#e06336] text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>Pendaftaran Cepat</span>
-          </button>
-
-          {/* Quick Action 2: Penambahan Paket Baru */}
-          <button
-            onClick={() => setShowAddPackageModal(true)}
-            className={`px-3.5 py-2 border rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
-              isDark
-                ? 'bg-[#2a2926] hover:bg-[#343330] text-[#f4f3ef] border-[#3d3b37]'
-                : 'bg-[#faf9f6] hover:bg-[#eeebe3] text-[#23211e] border-[#dedbd2]'
-            }`}
-          >
-            <Plus className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Tambah Paket Baru</span>
-          </button>
-
-          {/* Quick Action 3: Kelola Paket (Hapus, Tutup, Sold Out) */}
-          <button
-            onClick={() => setShowManagePackageModal(true)}
-            className={`px-3.5 py-2 border rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer ${
-              isDark
-                ? 'bg-[#2a2926] hover:bg-[#343330] text-[#d6d3cb] border-[#3d3b37]'
-                : 'bg-[#faf9f6] hover:bg-[#eeebe3] text-[#4a4740] border-[#dedbd2]'
-            }`}
-          >
-            <SlidersHorizontal className="w-3.5 h-3.5 text-[#f59e0b]" />
-            <span>Kelola Paket (Hapus, Tutup, Sold Out)</span>
-          </button>
-        </div>
+      {/* KPI */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          label="Total jamaah"
+          value={jamaahList.length}
+          icon={Users}
+          tone="accent"
+          hint={`${completeCount} berkas lengkap`}
+          footer={<Progress value={pct(completeCount)} />}
+        />
+        <StatCard
+          label="Kas masuk"
+          value={juta(totalRevenue)}
+          icon={Wallet}
+          tone="success"
+          hint={`${transactions.length} transaksi tercatat`}
+        />
+        <StatCard
+          label="Sisa piutang"
+          value={juta(totalReceivables)}
+          icon={Receipt}
+          tone="violet"
+          hint="Menunggu pelunasan jamaah"
+        />
+        <StatCard
+          label="Perlu lengkapi data"
+          value={incompleteCount}
+          icon={AlertTriangle}
+          tone="warning"
+          hint="Baru nama & no. HP — perlu KTP/paspor"
+        />
       </div>
 
-      {/* Sunsama 4 Top Minimal Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* KPI 1 */}
-        <div
-          className={`p-4 rounded-xl border shadow-xs transition-colors ${
-            isDark
-              ? 'bg-[#22211f] border-[#33312e]'
-              : 'bg-white border-[#e8e5dc]'
-          }`}
-        >
-          <div
-            className={`flex items-center justify-between mb-1 ${
-              isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-            }`}
-          >
-            <span className="text-xs font-medium">Total Jamaah</span>
-            <span className="w-2 h-2 rounded-full bg-[#10b981]" />
-          </div>
-          <div
-            className={`text-2xl font-bold tracking-tight font-price-myriad ${
-              isDark ? 'text-[#f4f3ef]' : 'text-[#23211e]'
-            }`}
-          >
-            {totalJamaah}
-          </div>
-          <div
-            className={`text-[11px] mt-1 ${
-              isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-            }`}
-          >
-            Jamaah aktif di sistem
-          </div>
-        </div>
-
-        {/* KPI 2: Kas Pembayaran */}
-        <div
-          className={`p-4 rounded-xl border shadow-xs transition-colors ${
-            isDark
-              ? 'bg-[#22211f] border-[#33312e]'
-              : 'bg-white border-[#e8e5dc]'
-          }`}
-        >
-          <div
-            className={`flex items-center justify-between mb-1 ${
-              isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-            }`}
-          >
-            <span className="text-xs font-medium">Kas Pembayaran Masuk</span>
-            <span className="w-2 h-2 rounded-full bg-[#f27244]" />
-          </div>
-          <div
-            className={`text-2xl font-bold tracking-tight font-price-myriad ${
-              isDark ? 'text-[#f4f3ef]' : 'text-[#23211e]'
-            }`}
-          >
-            {formatRupiah(totalRevenue)}
-          </div>
-          <div
-            className={`text-[11px] mt-1 ${
-              isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-            }`}
-          >
-            {transactions.length} transaksi pembayaran sah
-          </div>
-        </div>
-
-        {/* KPI 3 */}
-        <div
-          className={`p-4 rounded-xl border shadow-xs transition-colors ${
-            isDark
-              ? 'bg-[#22211f] border-[#33312e]'
-              : 'bg-white border-[#e8e5dc]'
-          }`}
-        >
-          <div
-            className={`flex items-center justify-between mb-1 ${
-              isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-            }`}
-          >
-            <span className="text-xs font-medium">Perlu Lengkapi Data</span>
-            <span className="w-2 h-2 rounded-full bg-[#f59e0b]" />
-          </div>
-          <div className="text-2xl font-bold text-[#f59e0b] tracking-tight font-price-myriad">
-            {incompleteCount}
-          </div>
-          <div
-            className={`text-[11px] mt-1 ${
-              isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-            }`}
-          >
-            Baru Nama &amp; No HP (perlu KTP/Paspor)
-          </div>
-        </div>
-
-        {/* KPI 4: Sisa Piutang */}
-        <div
-          className={`p-4 rounded-xl border shadow-xs transition-colors ${
-            isDark
-              ? 'bg-[#22211f] border-[#33312e]'
-              : 'bg-white border-[#e8e5dc]'
-          }`}
-        >
-          <div
-            className={`flex items-center justify-between mb-1 ${
-              isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-            }`}
-          >
-            <span className="text-xs font-medium">Sisa Piutang Berjalan</span>
-            <span className="w-2 h-2 rounded-full bg-[#8b5cf6]" />
-          </div>
-          <div
-            className={`text-2xl font-bold tracking-tight font-price-myriad ${
-              isDark ? 'text-[#d6d3cb]' : 'text-[#4a4740]'
-            }`}
-          >
-            {formatRupiah(totalReceivables)}
-          </div>
-          <div
-            className={`text-[11px] mt-1 ${
-              isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-            }`}
-          >
-            Tagihan pelunasan bertahap
-          </div>
-        </div>
-      </div>
-
-      {/* 3 Simple Package Cards (With Distinct Kanban Colors & Myriad Bold) */}
-      <div>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#f27244]" />
-            <h2
-              className={`text-xs font-bold uppercase tracking-wider ${
-                isDark ? 'text-[#f4f3ef]' : 'text-[#23211e]'
-              }`}
-            >
-              3 Program Paket Umroh Resmi (Warna Kanban)
-            </h2>
-          </div>
-          <button
-            onClick={() => setCurrentTab('packages')}
-            className="text-xs text-[#f27244] hover:text-[#ff8559] font-medium flex items-center gap-1 transition-colors"
-          >
-            <Kanban className="w-3.5 h-3.5" />
-            <span>Buka Papan Kanban &rarr;</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {packages.map((pkg) => {
-            const kc = pkg.kanbanColors;
-
-            return (
-              <div
-                key={pkg.id}
-                className="rounded-xl border p-5 shadow-xs transition-all flex flex-col justify-between group"
-                style={{
-                  borderColor: isDark ? kc.columnBorderDark : kc.columnBorderLight,
-                  backgroundColor: isDark ? '#22211f' : '#ffffff',
-                }}
-              >
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-2">
-                    <span
-                      className="flex items-center gap-1.5 px-2 py-0.5 rounded text-[11px] font-bold font-mono"
-                      style={{
-                        backgroundColor: isDark ? kc.badgeBgDark : kc.badgeBgLight,
-                        color: isDark ? kc.badgeTextDark : kc.badgeTextLight,
-                      }}
-                    >
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: kc.dotColor }} />
-                      <span>{pkg.durationDays} Hari</span>
-                    </span>
-                    <span
-                      className="font-bold text-[11px] font-mono px-2 py-0.5 rounded"
-                      style={{
-                        backgroundColor: isDark ? kc.badgeBgDark : kc.badgeBgLight,
-                        color: kc.accent,
-                      }}
-                    >
-                      {pkg.departureMonth}
-                    </span>
-                  </div>
-
-                  <h3
-                    className={`text-base font-bold leading-snug group-hover:text-[#f27244] transition-colors ${
-                      isDark ? 'text-[#f4f3ef]' : 'text-[#23211e]'
-                    }`}
-                  >
-                    {pkg.name}
-                  </h3>
-
-                  <div className="mt-3">
-                    <div
-                      className={`text-[10px] uppercase font-semibold tracking-wider ${
-                        isDark ? 'text-[#8c8982]' : 'text-[#858178]'
-                      }`}
-                    >
-                      Harga All-In (Myriad Bold)
-                    </div>
-                    <div
-                      className="text-xl font-bold font-price-myriad mt-0.5"
-                      style={{ color: isDark ? '#ffffff' : kc.badgeTextLight }}
-                    >
-                      {formatRupiah(pkg.price)}
-                    </div>
-                  </div>
-
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        {/* Grafik penerimaan per paket */}
+        <Card pad className="xl:col-span-8">
+          <CardHeader
+            icon={BarChart3}
+            title="Penerimaan per paket"
+            subtitle="Dana terbayar dibanding total tagihan jamaah di tiap paket"
+            actions={
+              <Button size="sm" variant="ghost" onClick={() => setCurrentTab('finance')}>
+                Keuangan <ArrowUpRight className="size-3.5" />
+              </Button>
+            }
+          />
+          <div className="mt-6 flex h-[248px] items-end gap-4 border-b border-line sm:gap-8">
+            {perPackage.map(({ pkg, paid, target }) => {
+              const c = pkg.kanbanColors.accent;
+              return (
+                <div key={pkg.id} className="flex h-full flex-1 flex-col justify-end">
+                  <div className="num mb-2 text-center text-[13px] font-bold text-ink">{juta(paid)}</div>
                   <div
-                    className="mt-3 text-xs space-y-1 pt-2 border-t"
+                    className="relative w-full overflow-hidden rounded-t-2xl"
                     style={{
-                      borderColor: isDark ? '#2d2c29' : '#f0ede6',
-                      color: isDark ? '#a6a39b' : '#6b6760',
+                      height: `${Math.max(6, (target / chartMax) * 200)}px`,
+                      backgroundColor: `color-mix(in srgb, ${c} 14%, transparent)`,
+                      backgroundImage: `repeating-linear-gradient(135deg, transparent 0 6px, color-mix(in srgb, ${c} 10%, transparent) 6px 12px)`,
                     }}
+                    title={`Target ${formatRupiah(target)}`}
                   >
-                    <div className="truncate">Hotel Makkah: {pkg.makkahHotel}</div>
-                    <div className="truncate">Hotel Madinah: {pkg.madinahHotel}</div>
-                    <div className="truncate">Maskapai: {pkg.airline}</div>
+                    <div
+                      className="absolute inset-x-0 bottom-0 rounded-t-2xl"
+                      style={{ height: `${target ? (paid / target) * 100 : 0}%`, backgroundColor: c }}
+                    />
                   </div>
                 </div>
-
-                <div
-                  className="mt-4 pt-3 border-t flex items-center justify-between text-xs"
-                  style={{ borderColor: isDark ? '#2d2c29' : '#f0ede6' }}
-                >
-                  <span className="font-mono text-[11px] opacity-75">
-                    {pkg.bookedSeats} / {pkg.quota} Kursi Terisi
-                  </span>
-                  <button
-                    onClick={() => setSelectedPackageDetail(pkg)}
-                    className="font-semibold transition-colors"
-                    style={{ color: kc.accent }}
-                  >
-                    Detail Paket &rarr;
-                  </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex gap-4 sm:gap-8">
+            {perPackage.map(({ pkg, paid, target, count }) => (
+              <div key={pkg.id} className="min-w-0 flex-1 text-center">
+                <div className="truncate text-xs font-semibold text-ink">{pkg.name.replace(/^Umroh\s+/, '')}</div>
+                <div className="mt-0.5 text-[11px] text-muted">
+                  {count} pax · {target ? Math.round((paid / target) * 100) : 0}% terbayar
                 </div>
               </div>
+            ))}
+          </div>
+        </Card>
+
+        {/* Keberangkatan terdekat — kartu gelap */}
+        {nextGroup && (
+          <div className="flex flex-col rounded-[20px] bg-night p-6 text-night-ink xl:col-span-4">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2 text-xs font-semibold text-night-muted">
+                <CalendarClock className="size-4 text-accent" /> Keberangkatan terdekat
+              </span>
+              <span className="rounded-full bg-white/10 px-2.5 py-0.5 font-mono text-[11px] font-semibold">
+                {nextGroup.code}
+              </span>
+            </div>
+            <div className="mt-6 flex items-end gap-2">
+              <span className="num text-6xl leading-none font-bold">{daysLeft}</span>
+              <span className="mb-1.5 text-sm text-night-muted">hari lagi</span>
+            </div>
+            <div className="mt-2 text-sm font-semibold">{nextGroup.packageName}</div>
+            <div className="text-xs text-night-muted">
+              {formatDateIndo(nextGroup.departureDate)} – {formatDateIndo(nextGroup.returnDate)}
+            </div>
+
+            <div className="mt-5 flex items-center gap-3 rounded-2xl bg-white/5 p-3.5">
+              <Plane className="size-4 shrink-0 text-accent" />
+              <div className="min-w-0 text-xs">
+                <div className="truncate font-semibold">
+                  {nextGroup.airline} · {nextGroup.flightNumber}
+                </div>
+                <div className="truncate text-night-muted">
+                  {nextGroup.departureAirport} → {nextGroup.arrivalAirport}
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-4 text-xs">
+              <div className="flex justify-between text-night-muted">
+                <span>Jamaah terdaftar</span>
+                <span className="num font-semibold text-night-ink">
+                  {nextGroupPax} / {nextGroup.totalQuota}
+                </span>
+              </div>
+              <Progress value={(nextGroupPax / nextGroup.totalQuota) * 100} className="mt-2" track="bg-white/10" />
+              <div className="mt-3 truncate text-night-muted">TL: {nextGroup.tourLeader}</div>
+            </div>
+
+            <div className="mt-auto pt-6">
+              <button
+                onClick={() => setCurrentTab('manifest')}
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-accent text-[13px] font-semibold text-white transition-colors hover:bg-accent-strong"
+              >
+                Buka manifest <ArrowUpRight className="size-4" />
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        {/* Paket & okupansi */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:col-span-8">
+          {packages.map((pkg) => {
+            const c = pkg.kanbanColors.accent;
+            const fill = (pkg.bookedSeats / pkg.quota) * 100;
+            return (
+              <Card key={pkg.id} className="flex flex-col p-5">
+                <div className="flex items-center justify-between">
+                  <span
+                    className="rounded-full px-2.5 py-0.5 text-[11px] font-bold"
+                    style={{ backgroundColor: `color-mix(in srgb, ${c} 12%, transparent)`, color: c }}
+                  >
+                    {pkg.durationDays} hari
+                  </span>
+                  <span className="text-[11px] font-medium text-muted">{pkg.departureMonth}</span>
+                </div>
+                <h3 className="mt-3 text-[15px] leading-snug font-bold text-ink">{pkg.name}</h3>
+                <div className="num mt-1 text-lg font-bold text-ink">{formatRupiah(pkg.price)}</div>
+                <dl className="mt-4 space-y-2 border-t border-line pt-4 text-xs">
+                  {[
+                    ['Makkah', pkg.makkahHotel],
+                    ['Madinah', pkg.madinahHotel],
+                    ['Maskapai', pkg.airline],
+                  ].map(([k, v]) => (
+                    <div key={k} className="flex gap-2">
+                      <dt className="w-16 shrink-0 text-faint">{k}</dt>
+                      <dd className="min-w-0 truncate font-medium text-ink" title={v}>
+                        {v}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <div className="mt-auto pt-5">
+                  <div className="mb-2 flex justify-between text-xs">
+                    <span className="text-muted">Kursi terisi</span>
+                    <span className="num font-semibold text-ink">
+                      {pkg.bookedSeats}/{pkg.quota}
+                    </span>
+                  </div>
+                  <Progress value={fill} color={c} />
+                  <button
+                    onClick={() => setSelectedPackageDetail(pkg)}
+                    className="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-ink hover:text-accent"
+                  >
+                    Detail paket <ArrowUpRight className="size-3.5" />
+                  </button>
+                </div>
+              </Card>
             );
           })}
         </div>
+
+        {/* Status visa & berkas */}
+        <Card pad className="xl:col-span-4">
+          <CardHeader icon={ShieldCheck} title="Visa & berkas" subtitle={`${jamaahList.length} jamaah terdaftar`} />
+          <div className="mt-5 flex h-3 gap-1 overflow-hidden rounded-full">
+            {visaCounts
+              .filter((v) => v.count)
+              .map((v) => (
+                <div
+                  key={v.status}
+                  style={{ flex: v.count, backgroundColor: visaColor[v.status] }}
+                  title={`${v.status}: ${v.count}`}
+                />
+              ))}
+          </div>
+          <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2.5">
+            {visaCounts.map((v) => (
+              <li key={v.status} className="flex items-center gap-2 text-xs">
+                <span className="size-2 rounded-full" style={{ backgroundColor: visaColor[v.status] }} />
+                <span className="flex-1 text-muted">{v.status}</span>
+                <span className="num font-semibold text-ink">{v.count}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="my-5 border-t border-line" />
+          <div className="space-y-3.5">
+            {docRows.map((d) => (
+              <div key={d.label}>
+                <div className="mb-1.5 flex justify-between text-xs">
+                  <span className="text-muted">{d.label}</span>
+                  <span className="num font-semibold text-ink">{d.value}%</span>
+                </div>
+                <Progress value={d.value} color="var(--ink)" />
+              </div>
+            ))}
+          </div>
+        </Card>
       </div>
 
-      {/* Fast Intake Banner */}
-      <div
-        className={`border rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs transition-colors ${
-          isDark
-            ? 'bg-[#25221d] border-[#3d2e24]'
-            : 'bg-[#fffbf7] border-[#fed7c8]'
-        }`}
-      >
-        <div>
-          <div
-            className={`text-xs font-bold flex items-center gap-2 ${
-              isDark ? 'text-[#f4f3ef]' : 'text-[#23211e]'
-            }`}
-          >
-            <span className="w-2 h-2 rounded-full bg-[#f27244]" />
-            <span>Formulir Pendaftaran Cepat (Wajib Nama &amp; No HP Saja)</span>
-          </div>
-          <p
-            className={`text-xs mt-0.5 ${
-              isDark ? 'text-[#a6a39b]' : 'text-[#737069]'
-            }`}
-          >
-            Sistem ramah agen: daftarkan calon jamaah seketika. Berkas paspor dan scan KTP dapat dilengkapi belakangan kapan saja.
-          </p>
+      {/* Jamaah terbaru */}
+      <Card className="overflow-hidden">
+        <div className="card-pad pb-4">
+          <CardHeader
+            icon={Users}
+            title="Jamaah terbaru"
+            subtitle="Klik baris untuk melengkapi data atau mengunggah KTP / paspor"
+            actions={
+              <Button size="sm" onClick={() => setCurrentTab('jamaah')}>
+                Lihat semua ({jamaahList.length})
+              </Button>
+            }
+          />
         </div>
-
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => setShowAddJamaahModal(true)}
-            className="px-4 py-2 bg-[#f27244] hover:bg-[#e06336] text-white rounded-lg text-xs font-semibold shadow-xs flex items-center gap-1.5 transition-colors"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>+ Input Nama &amp; HP</span>
-          </button>
-          <button
-            onClick={handleExportXlsx}
-            className={`px-3.5 py-2 border rounded-lg text-xs font-medium flex items-center gap-1.5 transition-colors ${
-              isDark
-                ? 'bg-[#2a2926] hover:bg-[#343330] text-[#d6d3cb] border-[#383633]'
-                : 'bg-white hover:bg-[#f7f6f2] text-[#4a4740] border-[#dedbd2]'
-            }`}
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-500" />
-            <span>Export Excel (.xlsx)</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Recent Jamaah Table */}
-      <div
-        className={`rounded-xl border shadow-xs overflow-hidden transition-colors ${
-          isDark
-            ? 'bg-[#22211f] border-[#33312e]'
-            : 'bg-white border-[#e8e5dc]'
-        }`}
-      >
-        <div
-          className={`p-4 border-b flex items-center justify-between ${
-            isDark ? 'border-[#2d2c29]' : 'border-[#eeece6]'
-          }`}
-        >
-          <div>
-            <h3
-              className={`text-xs font-bold uppercase tracking-wider ${
-                isDark ? 'text-[#f4f3ef]' : 'text-[#23211e]'
-              }`}
-            >
-              Daftar Jamaah Terdaftar
-            </h3>
-            <p
-              className={`text-[11px] mt-0.5 ${
-                isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-              }`}
-            >
-              Klik baris jamaah untuk melengkapi data atau mengunggah scan KTP / Paspor.
-            </p>
-          </div>
-
-          <button
-            onClick={() => setCurrentTab('jamaah')}
-            className="text-xs font-semibold text-[#f27244] hover:underline"
-          >
-            Lihat Semua ({jamaahList.length})
-          </button>
-        </div>
-
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead
-              className={`border-b font-semibold ${
-                isDark
-                  ? 'bg-[#1e1d1b] border-[#2d2c29] text-[#9c988f]'
-                  : 'bg-[#faf9f6] border-[#eeece6] text-[#737069]'
-              }`}
-            >
+          <table className="table min-w-[760px]">
+            <thead>
               <tr>
-                <th className="py-2.5 px-4">Nama Jamaah &amp; WhatsApp</th>
-                <th className="py-2.5 px-3">Paket Umroh (Kanban)</th>
-                <th className="py-2.5 px-3">Kelengkapan Data</th>
-                <th className="py-2.5 px-3">Scan KTP &amp; Paspor</th>
-                <th className="py-2.5 px-3">Pembayaran (Myriad Bold)</th>
-                <th className="py-2.5 px-4 text-right">Aksi</th>
+                <th>Jamaah</th>
+                <th>Paket</th>
+                <th>Berkas</th>
+                <th>Visa</th>
+                <th className="text-right">Pembayaran</th>
               </tr>
             </thead>
-            <tbody
-              className={`divide-y ${
-                isDark
-                  ? 'divide-[#2d2c29] text-[#d6d3cb]'
-                  : 'divide-[#f0ede6] text-[#33302b]'
-              }`}
-            >
+            <tbody>
               {jamaahList.slice(0, 6).map((j) => {
                 const pkg = packages.find((p) => p.id === j.packageId);
-                const kc = pkg?.kanbanColors;
-
+                const paidPct = j.totalCost ? Math.round((j.amountPaid / j.totalCost) * 100) : 0;
                 return (
-                  <tr
-                    key={j.id}
-                    className={`transition-colors cursor-pointer ${
-                      isDark ? 'hover:bg-[#282724]' : 'hover:bg-[#fbfaf7]'
-                    }`}
-                    onClick={() => setSelectedJamaah(j)}
-                  >
-                    <td className="py-3 px-4">
-                      <div
-                        className={`font-semibold ${
-                          isDark ? 'text-[#f4f3ef]' : 'text-[#1e1d1b]'
-                        }`}
-                      >
-                        {j.fullName}
-                      </div>
-                      <div className="text-[11px] text-[#f27244] font-mono flex items-center gap-1 mt-0.5">
-                        <Phone className="w-3 h-3" />
-                        <span>{j.phoneWhatsapp}</span>
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-3">
-                      {pkg && kc ? (
-                        <span
-                          className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1.5 border"
-                          style={{
-                            backgroundColor: isDark ? kc.badgeBgDark : kc.badgeBgLight,
-                            color: isDark ? kc.badgeTextDark : kc.badgeTextLight,
-                            borderColor: kc.accent,
-                          }}
-                        >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full shrink-0"
-                            style={{ backgroundColor: kc.dotColor }}
-                          />
-                          <span>{pkg.name}</span>
-                        </span>
-                      ) : (
-                        <span>-</span>
-                      )}
-                      <div
-                        className={`text-[10px] mt-0.5 font-mono ${
-                          isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-                        }`}
-                      >
-                        {j.departureDate}
-                      </div>
-                    </td>
-
-                    <td className="py-3 px-3">
-                      {j.isDataComplete ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-500 bg-emerald-500/15 px-2 py-0.5 rounded border border-emerald-500/30">
-                          <CheckCircle2 className="w-3 h-3" />
-                          <span>Lengkap</span>
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-500 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30">
-                          <AlertCircle className="w-3 h-3" />
-                          <span>Belum Lengkap</span>
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-3 px-3">
-                      <div className="text-[11px] space-y-0.5 opacity-85">
-                        <div>
-                          KTP:{' '}
-                          {j.documentStatus.ktpUploaded ? (
-                            <strong className="text-emerald-500">Sudah Ada</strong>
-                          ) : (
-                            <span className="text-rose-400">Belum</span>
-                          )}
-                        </div>
-                        <div>
-                          Paspor:{' '}
-                          {j.documentStatus.passportUploaded ? (
-                            <strong className="text-emerald-500">Sudah Ada</strong>
-                          ) : (
-                            <span className="text-rose-400">Belum</span>
-                          )}
+                  <tr key={j.id} className="row-link" onClick={() => setSelectedJamaah(j)}>
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <Avatar name={j.fullName} color={pkg?.kanbanColors.accent} />
+                        <div className="min-w-0">
+                          <div className="truncate font-semibold text-ink">{j.fullName}</div>
+                          <div className="font-mono text-[11px] text-muted">{j.phoneWhatsapp}</div>
                         </div>
                       </div>
                     </td>
-
-                    <td className="py-3 px-3">
-                      <div
-                        className={`font-bold font-price-myriad ${
-                          isDark ? 'text-[#f4f3ef]' : 'text-[#1e1d1b]'
-                        }`}
-                      >
-                        {formatRupiah(j.amountPaid)}
-                      </div>
-                      <div
-                        className={`text-[10px] ${
-                          isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-                        }`}
-                      >
-                        {j.paymentStatus}
-                      </div>
+                    <td>
+                      <PackageTag pkg={pkg} short />
+                      <div className="mt-1 text-[11px] text-muted">{formatDateIndo(j.departureDate)}</div>
                     </td>
-
-                    <td className="py-3 px-4 text-right">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedJamaah(j);
-                        }}
-                        className="text-xs font-semibold text-[#f27244] hover:underline"
-                      >
-                        Lengkapi &rarr;
-                      </button>
+                    <td>
+                      <Badge tone={j.isDataComplete ? 'success' : 'warning'} dot>
+                        {j.isDataComplete ? 'Lengkap' : 'Belum lengkap'}
+                      </Badge>
+                    </td>
+                    <td>
+                      <Badge tone={visaTone(j.visaStatus)}>{j.visaStatus}</Badge>
+                    </td>
+                    <td className="text-right">
+                      <div className="num font-semibold text-ink">{formatRupiah(j.amountPaid)}</div>
+                      <div className="mt-1 flex items-center justify-end gap-2">
+                        <Badge tone={paymentTone(j.paymentStatus)}>{j.paymentStatus}</Badge>
+                        <span className={cx('num text-[11px] text-muted')}>{paidPct}%</span>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -621,7 +444,7 @@ export const DashboardView: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };

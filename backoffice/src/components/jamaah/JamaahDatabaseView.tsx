@@ -1,108 +1,66 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useApp } from '../../context/AppContext';
-import { Jamaah } from '../../types';
+import { Jamaah, PaymentStatus } from '../../types';
 import { formatRupiah, formatDateIndo, exportToXlsx, buildWaLink } from '../../utils/formatters';
 import {
-  Users,
-  Search,
-  UserPlus,
-  FileSpreadsheet,
-  PhoneCall,
-  CheckCircle2,
-  AlertCircle,
-  UploadCloud,
-  FileText,
-  ArrowUpDown,
-  Layers,
-  List,
-  Compass,
-  Calendar,
-} from 'lucide-react';
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  IconButton,
+  PackageTag,
+  PageHeader,
+  SearchInput,
+  Segmented,
+  paymentTone,
+  visaTone,
+  cx,
+} from '../ui';
+import { FileSpreadsheet, IdCard, Layers, List, MessageCircle, Truck, UserPlus, Users } from 'lucide-react';
+
+type SortKey = 'package' | 'departureDate' | 'name' | 'balance' | 'completeness';
 
 export const JamaahDatabaseView: React.FC = () => {
-  const {
-    jamaahList,
-    packages,
-    setShowAddJamaahModal,
-    setSelectedJamaah,
-    setIdCardJamaah,
-    setShippingLabelJamaah,
-    theme,
-  } = useApp();
+  const { jamaahList, packages, setShowAddJamaahModal, setSelectedJamaah, setIdCardJamaah, setShippingLabelJamaah } = useApp();
 
-  const isDark = theme === 'dark';
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterCompleteness, setFilterCompleteness] = useState<'all' | 'complete' | 'incomplete'>('all');
-  const [filterPayment, setFilterPayment] = useState('all');
-  const [filterPackage, setFilterPackage] = useState('all');
-  const [sortBy, setSortBy] = useState<'package' | 'departureDate' | 'name' | 'balance' | 'completeness'>('package');
+  const [query, setQuery] = useState('');
+  const [completeness, setCompleteness] = useState<'all' | 'complete' | 'incomplete'>('all');
+  const [payment, setPayment] = useState<'all' | PaymentStatus>('all');
+  const [pkgFilter, setPkgFilter] = useState('all');
+  const [sortBy, setSortBy] = useState<SortKey>('package');
   const [viewMode, setViewMode] = useState<'grouped' | 'flat'>('grouped');
 
-  // Filter and sort
-  const sortedAndFilteredList = useMemo(() => {
-    const list = jamaahList.filter((j) => {
-      const query = searchQuery.toLowerCase();
-      const matchSearch =
-        j.fullName.toLowerCase().includes(query) ||
-        (j.passportNumber && j.passportNumber.toLowerCase().includes(query)) ||
-        (j.nik && j.nik.includes(query)) ||
-        j.phoneWhatsapp.includes(query) ||
-        (j.city && j.city.toLowerCase().includes(query));
-
-      const matchCompleteness =
-        filterCompleteness === 'all' ||
-        (filterCompleteness === 'complete' && j.isDataComplete) ||
-        (filterCompleteness === 'incomplete' && !j.isDataComplete);
-
-      const matchPayment = filterPayment === 'all' || j.paymentStatus === filterPayment;
-      const matchPackage = filterPackage === 'all' || j.packageId === filterPackage;
-
-      return matchSearch && matchCompleteness && matchPayment && matchPackage;
-    });
-
-    return list.sort((a, b) => {
-      if (sortBy === 'package') {
-        const pkgA = packages.find((p) => p.id === a.packageId)?.name || 'zzz';
-        const pkgB = packages.find((p) => p.id === b.packageId)?.name || 'zzz';
-        return pkgA.localeCompare(pkgB);
-      }
-      if (sortBy === 'departureDate') {
-        return (a.departureDate || '').localeCompare(b.departureDate || '');
-      }
-      if (sortBy === 'name') {
-        return a.fullName.localeCompare(b.fullName);
-      }
-      if (sortBy === 'balance') {
-        const balA = a.totalCost - a.amountPaid;
-        const balB = b.totalCost - b.amountPaid;
-        return balB - balA;
-      }
-      if (sortBy === 'completeness') {
-        return (a.isDataComplete ? 0 : 1) - (b.isDataComplete ? 0 : 1);
-      }
-      return 0;
-    });
-  }, [jamaahList, packages, searchQuery, filterCompleteness, filterPayment, filterPackage, sortBy]);
-
-  // Grouped by package for Grouped View
-  const groupedPackages = useMemo(() => {
-    const groups: { [key: string]: Jamaah[] } = {};
-
-    packages.forEach((pkg) => {
-      groups[pkg.id] = [];
-    });
-    groups['unassigned'] = [];
-
-    sortedAndFilteredList.forEach((j) => {
-      if (j.packageId && groups[j.packageId]) {
-        groups[j.packageId].push(j);
-      } else {
-        groups['unassigned'].push(j);
-      }
-    });
-
-    return groups;
-  }, [sortedAndFilteredList, packages]);
+  const list = useMemo(() => {
+    const s = query.toLowerCase();
+    const pkgName = (id: string) => packages.find((p) => p.id === id)?.name || 'zzz';
+    return jamaahList
+      .filter(
+        (j) =>
+          (j.fullName.toLowerCase().includes(s) ||
+            j.passportNumber?.toLowerCase().includes(s) ||
+            j.nik?.includes(s) ||
+            j.phoneWhatsapp.includes(s) ||
+            j.city?.toLowerCase().includes(s)) &&
+          (completeness === 'all' || (completeness === 'complete') === j.isDataComplete) &&
+          (payment === 'all' || j.paymentStatus === payment) &&
+          (pkgFilter === 'all' || j.packageId === pkgFilter)
+      )
+      .sort((a, b) => {
+        switch (sortBy) {
+          case 'package':
+            return pkgName(a.packageId).localeCompare(pkgName(b.packageId));
+          case 'departureDate':
+            return (a.departureDate || '').localeCompare(b.departureDate || '');
+          case 'name':
+            return a.fullName.localeCompare(b.fullName);
+          case 'balance':
+            return b.totalCost - b.amountPaid - (a.totalCost - a.amountPaid);
+          case 'completeness':
+            return Number(a.isDataComplete) - Number(b.isDataComplete);
+        }
+      });
+  }, [jamaahList, packages, query, completeness, payment, pkgFilter, sortBy]);
 
   const handleExportXlsx = () => {
     const headers = [
@@ -125,604 +83,251 @@ export const JamaahDatabaseView: React.FC = () => {
       'TERBAYAR',
       'SISA TAGIHAN',
     ];
-
-    const rows = sortedAndFilteredList.map((j) => {
-      const pkg = packages.find((p) => p.id === j.packageId);
-      return [
-        j.fullName,
-        j.phoneWhatsapp,
-        j.nik || '-',
-        j.passportNumber || '-',
-        j.birthDate || '-',
-        j.birthPlace || '-',
-        j.passportExpiryDate || '-',
-        j.city || '-',
-        pkg ? pkg.name : '-',
-        j.departureDate || '-',
-        j.isDataComplete ? 'Lengkap' : 'Belum Lengkap (Nama & HP Saja)',
-        j.documentStatus.ktpUploaded ? 'Sudah Diunggah' : 'Belum',
-        j.documentStatus.passportUploaded ? 'Sudah Diunggah' : 'Belum',
-        j.visaStatus,
-        j.paymentStatus,
-        j.totalCost,
-        j.amountPaid,
-        j.totalCost - j.amountPaid,
-      ];
-    });
-
+    const rows = list.map((j) => [
+      j.fullName,
+      j.phoneWhatsapp,
+      j.nik || '-',
+      j.passportNumber || '-',
+      j.birthDate || '-',
+      j.birthPlace || '-',
+      j.passportExpiryDate || '-',
+      j.city || '-',
+      packages.find((p) => p.id === j.packageId)?.name || '-',
+      j.departureDate || '-',
+      j.isDataComplete ? 'Lengkap' : 'Belum Lengkap (Nama & HP Saja)',
+      j.documentStatus.ktpUploaded ? 'Sudah Diunggah' : 'Belum',
+      j.documentStatus.passportUploaded ? 'Sudah Diunggah' : 'Belum',
+      j.visaStatus,
+      j.paymentStatus,
+      j.totalCost,
+      j.amountPaid,
+      j.totalCost - j.amountPaid,
+    ]);
     exportToXlsx('Database_Jamaah_MKB_Travel', headers, rows);
   };
 
   const handleSendWa = (j: Jamaah) => {
     const balance = j.totalCost - j.amountPaid;
-    let message = `Assalamu'alaikum Warahmatullahi Wabarakatuh Bpk/Ibu *${j.fullName}*,\n\nKami dari *PT MUDAHKEBAITULLAH TRAVEL INDONESIA (Yogyakarta)* menginformasikan update status pendaftaran umroh Anda:\n\n`;
-
+    let msg = `Assalamu'alaikum Warahmatullahi Wabarakatuh Bpk/Ibu *${j.fullName}*,\n\nKami dari *PT MUDAHKEBAITULLAH TRAVEL INDONESIA (Yogyakarta)* menginformasikan update status pendaftaran umroh Anda:\n\n`;
     if (!j.isDataComplete) {
-      message += `Pendaftaran awal Anda telah kami catat. Mohon untuk melengkapi data & upload scan KTP serta Paspor asli untuk pengurusan visa Kemenhaj RI.\n\n`;
+      msg += `Pendaftaran awal Anda telah kami catat. Mohon untuk melengkapi data & upload scan KTP serta Paspor asli untuk pengurusan visa Kemenhaj RI.\n\n`;
     }
-
-    message += `🔹 Status Pembayaran: *${j.paymentStatus}*\n🔹 Terbayar: *${formatRupiah(j.amountPaid)}*\n`;
-    if (balance > 0) {
-      message += `🔹 Sisa Pelunasan: *${formatRupiah(balance)}*\n`;
-    }
-    message += `\nAlamat Kantor: Jl. Bener No.79 Bener, Kec. Tegalrejo, Kota Yogyakarta.\nJazakumullah Khairan Katsiran.`;
-
-    window.open(buildWaLink(j.phoneWhatsapp, message), '_blank');
+    msg += `🔹 Status Pembayaran: *${j.paymentStatus}*\n🔹 Terbayar: *${formatRupiah(j.amountPaid)}*\n`;
+    if (balance > 0) msg += `🔹 Sisa Pelunasan: *${formatRupiah(balance)}*\n`;
+    msg += `\nAlamat Kantor: Jl. Bener No.79 Bener, Kec. Tegalrejo, Kota Yogyakarta.\nJazakumullah Khairan Katsiran.`;
+    window.open(buildWaLink(j.phoneWhatsapp, msg), '_blank');
   };
 
-  const renderJamaahRow = (j: Jamaah) => {
-    const pkg = packages.find((p) => p.id === j.packageId);
-    const kc = pkg?.kanbanColors;
-    const balance = j.totalCost - j.amountPaid;
-
-    return (
-      <tr
-        key={j.id}
-        onClick={() => setSelectedJamaah(j)}
-        className={`transition-colors cursor-pointer ${
-          isDark ? 'hover:bg-[#282724]' : 'hover:bg-[#fbfaf7]'
-        }`}
-      >
-        <td className="py-3 px-4">
-          <div className="flex items-center gap-2">
-            <div
-              className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shrink-0 ${
-                isDark ? 'bg-[#2d2b28] text-[#f27244]' : 'bg-[#fff0eb] text-[#f27244]'
-              }`}
-            >
-              {j.fullName.slice(0, 1)}
-            </div>
-            <div>
-              <div className={`font-semibold ${isDark ? 'text-[#f4f3ef]' : 'text-[#1e1d1b]'}`}>
-                {j.fullName}
-              </div>
-              <div className="text-[11px] text-[#f27244] font-mono flex items-center gap-1 mt-0.5">
-                <PhoneCall className="w-3 h-3" />
-                <span>{j.phoneWhatsapp}</span>
-              </div>
-            </div>
-          </div>
-        </td>
-
-        <td className="py-3 px-3">
-          {pkg && kc ? (
-            <span
-              className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full inline-flex items-center gap-1.5 border"
-              style={{
-                backgroundColor: isDark ? kc.badgeBgDark : kc.badgeBgLight,
-                color: isDark ? kc.badgeTextDark : kc.badgeTextLight,
-                borderColor: kc.accent,
-              }}
-            >
-              <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: kc.dotColor }} />
-              <span>{pkg.name}</span>
-            </span>
-          ) : (
-            <span className="text-[11px] opacity-60">Belum Memilih Paket</span>
-          )}
-          <div
-            className={`text-[10px] mt-0.5 font-mono ${
-              isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-            }`}
-          >
-            {j.departureDate || '-'}
-          </div>
-        </td>
-
-        <td className="py-3 px-3">
-          {j.isDataComplete ? (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-500 bg-emerald-500/15 px-2 py-0.5 rounded border border-emerald-500/30">
-              <CheckCircle2 className="w-3 h-3" />
-              <span>Lengkap</span>
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-500 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/30">
-              <AlertCircle className="w-3 h-3" />
-              <span>Belum Lengkap</span>
-            </span>
-          )}
-        </td>
-
-        <td className="py-3 px-3 text-[11px]">
-          <div className="space-y-0.5">
-            <div>
-              KTP:{' '}
-              {j.documentStatus.ktpUploaded ? (
-                <span className="text-emerald-500 font-semibold">Ada &#10003;</span>
-              ) : (
-                <span className="text-rose-400">Belum</span>
-              )}
-            </div>
-            <div>
-              Paspor:{' '}
-              {j.documentStatus.passportUploaded ? (
-                <span className="text-emerald-500 font-semibold">Ada &#10003;</span>
-              ) : (
-                <span className="text-rose-400">Belum</span>
-              )}
-            </div>
-          </div>
-        </td>
-
-        <td className="py-3 px-3">
-          <div className={`font-bold font-price-myriad ${isDark ? 'text-[#f4f3ef]' : 'text-[#1e1d1b]'}`}>
-            {formatRupiah(j.amountPaid)}
-          </div>
-          <div className={`text-[10px] ${isDark ? 'text-[#737069]' : 'text-[#8c8982]'}`}>
-            {j.paymentStatus} {balance > 0 && `(Sisa: ${formatRupiah(balance)})`}
-          </div>
-        </td>
-
-        <td className="py-3 px-4 text-right space-x-1.5 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-          <button
-            onClick={() => setShippingLabelJamaah(j)}
-            className="px-2 py-1 rounded text-[11px] font-medium border border-sky-500/30 text-sky-600 dark:text-sky-400 hover:bg-sky-500/10 transition-colors cursor-pointer"
-            title="Cetak Label Pengiriman Koper Alamat KTP"
-          >
-            Resi Koper
-          </button>
-          <button
-            onClick={() => setIdCardJamaah(j)}
-            className={`p-1.5 rounded transition-colors inline-flex cursor-pointer ${
-              isDark
-                ? 'text-[#9c988f] hover:text-[#f4f3ef] hover:bg-[#282725]'
-                : 'text-[#737069] hover:text-[#23211e] hover:bg-[#f0ede6]'
-            }`}
-            title="Cetak ID Card Kalung"
-          >
-            <FileText className="w-3.5 h-3.5 text-[#38bdf8]" />
-          </button>
-          <button
-            onClick={() => handleSendWa(j)}
-            className={`p-1.5 rounded transition-colors inline-flex cursor-pointer ${
-              isDark
-                ? 'text-[#9c988f] hover:text-[#f27244] hover:bg-[#282725]'
-                : 'text-[#737069] hover:text-[#f27244] hover:bg-[#f0ede6]'
-            }`}
-            title="Kirim Pesan WhatsApp"
-          >
-            <PhoneCall className="w-3.5 h-3.5" />
-          </button>
-          <button
-            onClick={() => setSelectedJamaah(j)}
-            className="px-2.5 py-1 text-xs font-semibold text-[#f27244] hover:underline cursor-pointer"
-          >
-            Lengkapi &rarr;
-          </button>
-        </td>
-      </tr>
-    );
-  };
-
-  return (
-    <div className="space-y-6 font-sans">
-      {/* Top Header bar */}
-      <div
-        className={`p-5 rounded-xl border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors ${
-          isDark
-            ? 'bg-[#22211f] border-[#33312e] text-[#f4f3ef]'
-            : 'bg-white border-[#e8e5dc] text-[#23211e]'
-        }`}
-      >
-        <div>
-          <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold">
-              Database &amp; Pengelompokan Jamaah
-            </h2>
-            <span
-              className={`text-xs font-mono px-2 py-0.5 rounded-full font-bold ${
-                isDark ? 'bg-[#2e2c29] text-[#f27244]' : 'bg-[#fff0eb] text-[#e06336]'
-              }`}
-            >
-              {jamaahList.length} Jamaah
-            </span>
-          </div>
-          <p
-            className={`text-xs mt-0.5 ${
-              isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-            }`}
-          >
-            Daftar jamaah dapat disortir dan dikelompokkan berdasarkan grup paket keberangkatan resmi.
-          </p>
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* View Mode Toggle: Grup Paket vs Tabel Biasa */}
-          <div
-            className={`flex items-center p-1 rounded-lg border text-xs ${
-              isDark ? 'bg-[#1a1918] border-[#33312e]' : 'bg-[#faf9f6] border-[#dedbd2]'
-            }`}
-          >
-            <button
-              onClick={() => setViewMode('grouped')}
-              className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 cursor-pointer ${
-                viewMode === 'grouped'
-                  ? isDark
-                    ? 'bg-[#2d2b28] text-white font-semibold shadow-xs'
-                    : 'bg-white text-[#23211e] font-semibold shadow-2xs'
-                  : 'text-[#8c8982]'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5 text-[#f27244]" />
-              <span>Grup Paket</span>
-            </button>
-            <button
-              onClick={() => setViewMode('flat')}
-              className={`px-2.5 py-1 rounded-md transition-all flex items-center gap-1 cursor-pointer ${
-                viewMode === 'flat'
-                  ? isDark
-                    ? 'bg-[#2d2b28] text-white font-semibold shadow-xs'
-                    : 'bg-white text-[#23211e] font-semibold shadow-2xs'
-                  : 'text-[#8c8982]'
-              }`}
-            >
-              <List className="w-3.5 h-3.5" />
-              <span>Tabel Penuh</span>
-            </button>
-          </div>
-
-          <button
-            onClick={handleExportXlsx}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
-              isDark
-                ? 'bg-[#2a2926] hover:bg-[#343330] text-[#d6d3cb] border-[#383633]'
-                : 'bg-[#f7f6f2] hover:bg-[#eeebe3] text-[#4a4740] border-[#dedbd2]'
-            }`}
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-            <span>Export Excel (.xlsx)</span>
-          </button>
-
-          <button
-            onClick={() => setShowAddJamaahModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#f27244] hover:bg-[#e06336] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-          >
-            <UserPlus className="w-4 h-4" />
-            <span>+ Pendaftaran Cepat</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Package Quick Filter Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
-        <span
-          className={`font-semibold shrink-0 ${
-            isDark ? 'text-[#8c8982]' : 'text-[#737069]'
-          }`}
-        >
-          Grup Paket:
-        </span>
-        <button
-          onClick={() => setFilterPackage('all')}
-          className={`px-3 py-1 rounded-lg border font-medium transition-colors cursor-pointer shrink-0 ${
-            filterPackage === 'all'
-              ? isDark
-                ? 'bg-[#2d2b28] text-[#f4f3ef] border-[#f27244]'
-                : 'bg-white text-[#23211e] border-[#f27244] shadow-xs'
-              : isDark
-              ? 'bg-[#1e1d1b] border-[#33312e] text-[#8c8982]'
-              : 'bg-[#faf9f6] border-[#e8e5dc] text-[#737069]'
-          }`}
-        >
-          Semua Paket ({jamaahList.length})
-        </button>
-
-        {packages.map((pkg) => {
-          const count = jamaahList.filter((j) => j.packageId === pkg.id).length;
-          const isSelected = filterPackage === pkg.id;
-          const kc = pkg.kanbanColors;
-
-          return (
-            <button
-              key={pkg.id}
-              onClick={() => setFilterPackage(isSelected ? 'all' : pkg.id)}
-              className="px-3 py-1 rounded-lg border font-medium transition-colors cursor-pointer shrink-0 flex items-center gap-1.5"
-              style={{
-                backgroundColor: isSelected
-                  ? isDark
-                    ? kc.badgeBgDark
-                    : kc.badgeBgLight
-                  : isDark
-                  ? '#1e1d1b'
-                  : '#faf9f6',
-                borderColor: isSelected ? kc.accent : isDark ? '#33312e' : '#e8e5dc',
-                color: isSelected
-                  ? isDark
-                    ? kc.badgeTextDark
-                    : kc.badgeTextLight
-                  : isDark
-                  ? '#d6d3cb'
-                  : '#4a4740',
-              }}
-            >
-              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: kc.dotColor }} />
-              <span className="font-semibold">{pkg.name}</span>
-              <span className="text-[10px] font-mono opacity-80">({count} pax)</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Filter and Sorting Toolbar */}
-      <div
-        className={`flex flex-col md:flex-row items-center justify-between gap-3 p-3.5 rounded-xl border shadow-xs transition-colors ${
-          isDark
-            ? 'bg-[#22211f] border-[#33312e]'
-            : 'bg-white border-[#e8e5dc]'
-        }`}
-      >
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-[#737069] absolute left-3 top-2.5" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Cari nama, WhatsApp, NIK, paspor, kota..."
-            className={`w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-[#f27244] ${
-              isDark
-                ? 'bg-[#1a1918] border-[#33312e] text-[#f4f3ef] placeholder-[#737069]'
-                : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e] placeholder-[#8c8982]'
-            }`}
-          />
-        </div>
-
-        <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
-          {/* Sort By Dropdown */}
-          <div className="flex items-center gap-1.5 text-xs">
-            <ArrowUpDown className="w-3.5 h-3.5 text-[#f27244]" />
-            <span className={isDark ? 'text-[#8c8982]' : 'text-[#737069]'}>Urutkan:</span>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as any)}
-              className={`p-1.5 rounded-lg border text-xs font-semibold cursor-pointer ${
-                isDark
-                  ? 'bg-[#1a1918] border-[#33312e] text-[#f4f3ef]'
-                  : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e]'
-              }`}
-            >
-              <option value="package">Grup Paket Keberangkatan (A-Z)</option>
-              <option value="departureDate">Tanggal Keberangkatan (Terdekat)</option>
-              <option value="name">Nama Jamaah (A-Z)</option>
-              <option value="balance">Sisa Tagihan (Tertinggi)</option>
-              <option value="completeness">Status Kelengkapan Berkas</option>
-            </select>
-          </div>
-
-          {/* Filter completeness */}
-          <div
-            className={`flex items-center gap-1 p-1 rounded-lg border text-xs ${
-              isDark ? 'bg-[#1a1918] border-[#2d2c29]' : 'bg-[#f7f6f2] border-[#dedbd2]'
-            }`}
-          >
-            <button
-              onClick={() => setFilterCompleteness('all')}
-              className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                filterCompleteness === 'all'
-                  ? isDark
-                    ? 'bg-[#2d2b28] text-white font-semibold shadow-xs'
-                    : 'bg-white text-[#23211e] font-semibold shadow-2xs'
-                  : 'text-[#8c8982]'
-              }`}
-            >
-              Semua
-            </button>
-            <button
-              onClick={() => setFilterCompleteness('complete')}
-              className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                filterCompleteness === 'complete'
-                  ? 'bg-emerald-500/20 text-emerald-500 font-semibold'
-                  : 'text-[#8c8982]'
-              }`}
-            >
-              Lengkap
-            </button>
-            <button
-              onClick={() => setFilterCompleteness('incomplete')}
-              className={`px-2 py-1 rounded-md transition-colors cursor-pointer ${
-                filterCompleteness === 'incomplete'
-                  ? 'bg-amber-500/20 text-amber-500 font-semibold'
-                  : 'text-[#8c8982]'
-              }`}
-            >
-              Belum
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* DISPLAY MODE 1: GROUPED BY PACKAGE */}
-      {viewMode === 'grouped' && (
-        <div className="space-y-6">
-          {packages
-            .filter((pkg) => filterPackage === 'all' || filterPackage === pkg.id)
-            .map((pkg) => {
-              const listInGroup = groupedPackages[pkg.id] || [];
-              const kc = pkg.kanbanColors;
-
-              return (
-                <div
-                  key={pkg.id}
-                  className="rounded-xl border shadow-xs overflow-hidden transition-colors"
-                  style={{
-                    borderColor: isDark ? kc.columnBorderDark : kc.columnBorderLight,
-                    backgroundColor: isDark ? '#22211f' : '#ffffff',
-                  }}
-                >
-                  {/* Group Header */}
-                  <div
-                    className="p-4 border-b flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                    style={{
-                      backgroundColor: isDark ? kc.columnHeaderDark : kc.columnHeaderLight,
-                      borderColor: isDark ? kc.columnBorderDark : kc.columnBorderLight,
-                    }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="w-3.5 h-3.5 rounded-full shrink-0"
-                        style={{ backgroundColor: kc.dotColor }}
-                      />
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3
-                            className="text-sm font-bold tracking-tight"
-                            style={{ color: isDark ? '#ffffff' : kc.badgeTextLight }}
-                          >
-                            {pkg.name}
-                          </h3>
-                          <span
-                            className="text-[11px] font-mono font-bold px-2 py-0.5 rounded"
-                            style={{
-                              backgroundColor: isDark ? kc.badgeBgDark : kc.badgeBgLight,
-                              color: kc.accent,
-                            }}
-                          >
-                            {pkg.durationDays} Hari · {pkg.departureMonth}
-                          </span>
-                        </div>
-                        <div
-                          className={`text-xs mt-0.5 flex items-center gap-3 ${
-                            isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-                          }`}
-                        >
-                          <span>Hotel: {pkg.makkahHotel} &amp; {pkg.madinahHotel}</span>
-                          <span>·</span>
-                          <span>Maskapai: {pkg.airline}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 self-end sm:self-auto">
-                      <div className="text-right">
-                        <div className="text-xs font-bold font-price-myriad text-[#f27244]">
-                          {formatRupiah(pkg.price)}
-                        </div>
-                        <div className="text-[10px] opacity-70">
-                          {listInGroup.length} / {pkg.quota} Kuota Terisi
-                        </div>
-                      </div>
-                      <span
-                        className="px-2.5 py-1 rounded-full text-xs font-mono font-bold border"
-                        style={{
-                          backgroundColor: isDark ? kc.badgeBgDark : kc.badgeBgLight,
-                          borderColor: kc.accent,
-                          color: isDark ? kc.badgeTextDark : kc.badgeTextLight,
-                        }}
-                      >
-                        {listInGroup.length} Jamaah
-                      </span>
+  const table = (rows: Jamaah[]) => (
+    <div className="overflow-x-auto">
+      <table className="table min-w-[960px] table-fixed">
+        <thead>
+          <tr>
+            <th className="w-[27%]">Jamaah</th>
+            <th className="w-[17%]">Paket & jadwal</th>
+            <th className="w-[15%]">Berkas</th>
+            <th className="w-[11%]">Visa</th>
+            <th className="w-[19%]">Pembayaran</th>
+            <th className="w-[11%] text-right">Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((j) => {
+            const pkg = packages.find((p) => p.id === j.packageId);
+            const balance = j.totalCost - j.amountPaid;
+            return (
+              <tr key={j.id} className="row-link" onClick={() => setSelectedJamaah(j)}>
+                <td>
+                  <div className="flex items-center gap-3">
+                    <Avatar name={j.fullName} color={pkg?.kanbanColors.accent} />
+                    <div className="min-w-0">
+                      <div className="truncate font-semibold text-ink">{j.fullName}</div>
+                      <div className="font-mono text-[11px] text-muted">{j.phoneWhatsapp}</div>
                     </div>
                   </div>
+                </td>
+                <td>
+                  <PackageTag pkg={pkg} short />
+                  <div className="mt-1 text-[11px] text-muted">{formatDateIndo(j.departureDate)}</div>
+                </td>
+                <td>
+                  <Badge tone={j.isDataComplete ? 'success' : 'warning'} dot>
+                    {j.isDataComplete ? 'Lengkap' : 'Belum lengkap'}
+                  </Badge>
+                  <div className="mt-1.5 flex gap-2 text-[11px]">
+                    <DocFlag ok={j.documentStatus.ktpUploaded} label="KTP" />
+                    <DocFlag ok={j.documentStatus.passportUploaded} label="Paspor" />
+                  </div>
+                </td>
+                <td>
+                  <Badge tone={visaTone(j.visaStatus)}>{j.visaStatus}</Badge>
+                </td>
+                <td>
+                  <div className="num font-semibold text-ink">{formatRupiah(j.amountPaid)}</div>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Badge tone={paymentTone(j.paymentStatus)}>{j.paymentStatus}</Badge>
+                    {balance > 0 && <span className="num text-[11px] whitespace-nowrap text-muted">sisa {formatRupiah(balance)}</span>}
+                  </div>
+                </td>
+                <td className="text-right" onClick={(e) => e.stopPropagation()}>
+                  <div className="inline-flex items-center gap-0.5">
+                    <IconButton icon={Truck} label="Label koper (alamat KTP)" onClick={() => setShippingLabelJamaah(j)} />
+                    <IconButton icon={IdCard} label="Cetak ID card" onClick={() => setIdCardJamaah(j)} />
+                    <IconButton icon={MessageCircle} label="Kirim WhatsApp" onClick={() => handleSendWa(j)} className="hover:text-emerald-600" />
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
 
-                  {/* Table of pilgrims in this group */}
-                  {listInGroup.length === 0 ? (
-                    <div className="p-6 text-center text-xs opacity-60">
-                      Tidak ada jamaah terdaftar dalam filter ini untuk grup {pkg.name}.
+  const shownPackages = packages.filter((p) => pkgFilter === 'all' || p.id === pkgFilter);
+  const unassigned = list.filter((j) => !packages.some((p) => p.id === j.packageId));
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Data jamaah"
+        description={`${jamaahList.length} jamaah terdaftar. Cukup nama & no. HP untuk mendaftar; berkas bisa dilengkapi belakangan.`}
+        actions={
+          <>
+            <Button icon={FileSpreadsheet} onClick={handleExportXlsx}>
+              Export Excel
+            </Button>
+            <Button variant="primary" icon={UserPlus} onClick={() => setShowAddJamaahModal(true)}>
+              Pendaftaran Cepat
+            </Button>
+          </>
+        }
+      />
+
+      {/* Filter paket */}
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        <FilterChip active={pkgFilter === 'all'} onClick={() => setPkgFilter('all')}>
+          Semua paket <span className="num text-faint">{jamaahList.length}</span>
+        </FilterChip>
+        {packages.map((p) => (
+          <FilterChip key={p.id} active={pkgFilter === p.id} onClick={() => setPkgFilter(pkgFilter === p.id ? 'all' : p.id)}>
+            <span className="size-2 rounded-full" style={{ backgroundColor: p.kanbanColors.accent }} />
+            {p.name}
+            <span className="num text-faint">{jamaahList.filter((j) => j.packageId === p.id).length}</span>
+          </FilterChip>
+        ))}
+      </div>
+
+      {/* Toolbar */}
+      <Card className="flex flex-col gap-3 p-3 2xl:flex-row 2xl:items-center">
+        <SearchInput value={query} onChange={setQuery} placeholder="Cari nama, WhatsApp, NIK, paspor, kota…" className="min-w-[240px] flex-1" />
+        <div className="flex flex-wrap items-center gap-2">
+          <select className="input w-auto" value={sortBy} onChange={(e) => setSortBy(e.target.value as SortKey)} aria-label="Urutkan">
+            <option value="package">Urut: paket (A–Z)</option>
+            <option value="departureDate">Urut: tanggal berangkat</option>
+            <option value="name">Urut: nama (A–Z)</option>
+            <option value="balance">Urut: sisa tagihan terbesar</option>
+            <option value="completeness">Urut: berkas belum lengkap</option>
+          </select>
+          <select
+            className="input w-auto"
+            value={payment}
+            onChange={(e) => setPayment(e.target.value as typeof payment)}
+            aria-label="Status bayar"
+          >
+            <option value="all">Semua status bayar</option>
+            <option value="Belum Bayar">Belum bayar</option>
+            <option value="DP Terbayar">DP terbayar</option>
+            <option value="Cicilan">Cicilan</option>
+            <option value="Lunas">Lunas</option>
+          </select>
+          <Segmented
+            value={completeness}
+            onChange={setCompleteness}
+            options={[
+              { value: 'all', label: 'Semua' },
+              { value: 'complete', label: 'Lengkap' },
+              { value: 'incomplete', label: 'Belum' },
+            ]}
+          />
+          <Segmented
+            value={viewMode}
+            onChange={setViewMode}
+            options={[
+              { value: 'grouped', label: 'Per paket', icon: Layers },
+              { value: 'flat', label: 'Tabel', icon: List },
+            ]}
+          />
+        </div>
+      </Card>
+
+      {viewMode === 'flat' ? (
+        <Card className="overflow-hidden">
+          {list.length ? table(list) : <EmptyState icon={Users} title="Tidak ada jamaah yang cocok" />}
+        </Card>
+      ) : (
+        <div className="space-y-5">
+          {shownPackages.map((pkg) => {
+            const rows = list.filter((j) => j.packageId === pkg.id);
+            const c = pkg.kanbanColors.accent;
+            return (
+              <Card key={pkg.id} className="overflow-hidden">
+                <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="h-10 w-1.5 rounded-full" style={{ backgroundColor: c }} />
+                    <div>
+                      <h2 className="text-[15px] font-bold text-ink">{pkg.name}</h2>
+                      <p className="text-xs text-muted">
+                        {pkg.durationDays} hari · {pkg.departureMonth} · {pkg.makkahHotel} & {pkg.madinahHotel}
+                      </p>
                     </div>
+                  </div>
+                  <div className="flex items-center gap-4 text-right">
+                    <div>
+                      <div className="num text-sm font-bold text-ink">{formatRupiah(pkg.price)}</div>
+                      <div className="text-[11px] text-muted">
+                        {rows.length} di filter · kuota {pkg.quota}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t border-line">
+                  {rows.length ? (
+                    table(rows)
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs border-collapse">
-                        <thead
-                          className={`border-b font-semibold ${
-                            isDark
-                              ? 'bg-[#1e1d1b] border-[#2d2c29] text-[#9c988f]'
-                              : 'bg-[#faf9f6] border-[#eeece6] text-[#737069]'
-                          }`}
-                        >
-                          <tr>
-                            <th className="py-2.5 px-4">Nama Jamaah &amp; WhatsApp</th>
-                            <th className="py-2.5 px-3">Grup Paket &amp; Jadwal</th>
-                            <th className="py-2.5 px-3">Status Data</th>
-                            <th className="py-2.5 px-3">Berkas KTP &amp; Paspor</th>
-                            <th className="py-2.5 px-3">Pembayaran (Myriad Bold)</th>
-                            <th className="py-2.5 px-4 text-right">Aksi</th>
-                          </tr>
-                        </thead>
-                        <tbody
-                          className={`divide-y ${
-                            isDark
-                              ? 'divide-[#2d2c29] text-[#d6d3cb]'
-                              : 'divide-[#f0ede6] text-[#33302b]'
-                          }`}
-                        >
-                          {listInGroup.map((j) => renderJamaahRow(j))}
-                        </tbody>
-                      </table>
-                    </div>
+                    <div className="px-6 py-6 text-center text-xs text-muted">Tidak ada jamaah di paket ini untuk filter saat ini.</div>
                   )}
                 </div>
-              );
-            })}
-        </div>
-      )}
-
-      {/* DISPLAY MODE 2: FLAT SORTED TABLE */}
-      {viewMode === 'flat' && (
-        <div
-          className={`rounded-xl border shadow-xs overflow-hidden transition-colors ${
-            isDark
-              ? 'bg-[#22211f] border-[#33312e]'
-              : 'bg-white border-[#e8e5dc]'
-          }`}
-        >
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead
-                className={`border-b font-semibold ${
-                  isDark
-                    ? 'bg-[#1e1d1b] border-[#2d2c29] text-[#9c988f]'
-                    : 'bg-[#faf9f6] border-[#eeece6] text-[#737069]'
-                }`}
-              >
-                <tr>
-                  <th className="py-2.5 px-4">Nama Jamaah &amp; WhatsApp</th>
-                  <th className="py-2.5 px-3">Grup Paket &amp; Jadwal</th>
-                  <th className="py-2.5 px-3">Status Data</th>
-                  <th className="py-2.5 px-3">Berkas KTP &amp; Paspor</th>
-                  <th className="py-2.5 px-3">Pembayaran (Myriad Bold)</th>
-                  <th className="py-2.5 px-4 text-right">Aksi</th>
-                </tr>
-              </thead>
-              <tbody
-                className={`divide-y ${
-                  isDark
-                    ? 'divide-[#2d2c29] text-[#d6d3cb]'
-                    : 'divide-[#f0ede6] text-[#33302b]'
-                }`}
-              >
-                {sortedAndFilteredList.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="py-8 text-center text-xs opacity-60">
-                      Tidak ada jamaah yang cocok dengan pencarian / filter.
-                    </td>
-                  </tr>
-                ) : (
-                  sortedAndFilteredList.map((j) => renderJamaahRow(j))
-                )}
-              </tbody>
-            </table>
-          </div>
+              </Card>
+            );
+          })}
+          {pkgFilter === 'all' && unassigned.length > 0 && (
+            <Card className="overflow-hidden">
+              <div className="p-5 text-[15px] font-bold text-ink">Belum memilih paket</div>
+              <div className="border-t border-line">{table(unassigned)}</div>
+            </Card>
+          )}
         </div>
       )}
     </div>
   );
 };
+
+const DocFlag: React.FC<{ ok: boolean; label: string }> = ({ ok, label }) => (
+  <span className={ok ? 'text-emerald-600 dark:text-emerald-400' : 'text-faint line-through'}>
+    {ok ? '✓ ' : ''}
+    {label}
+  </span>
+);
+
+const FilterChip: React.FC<{ active: boolean; onClick: () => void; children: React.ReactNode }> = ({ active, onClick, children }) => (
+  <button
+    onClick={onClick}
+    className={cx(
+      'inline-flex h-9 shrink-0 items-center gap-2 rounded-xl border px-3.5 text-xs font-semibold transition-colors',
+      active ? 'border-ink bg-ink text-canvas' : 'border-line bg-surface text-muted hover:text-ink'
+    )}
+  >
+    {children}
+  </button>
+);

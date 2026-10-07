@@ -282,3 +282,12 @@ export function downloadReceiptPdf(
   // Save to file
   doc.save(`Kwitansi_${tx.receiptNumber}_${tx.jamaahName.replace(/\s+/g, '_')}.pdf`);
 }
+
+/** Teks promosi paket untuk dibagikan via WhatsApp. */
+export function sharePackageToWhatsApp(
+  pkg: { name: string; price: number; durationDays: number; departureMonth: string; airline: string; makkahHotel: string; madinahHotel: string; highlightFeatures: string[] },
+  company: { legalName: string; address: string; whatsappDisplay: string; website: string }
+): void {
+  const text = `Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\nBerikut Informasi Program Resmi dari *${company.legalName}*:\n\n*${pkg.name.toUpperCase()}*\n🔹 Harga: *${formatRupiah(pkg.price)}*\n🔹 Durasi: ${pkg.durationDays} Hari (${pkg.departureMonth})\n🔹 Maskapai: ${pkg.airline}\n🔹 Hotel Makkah: ${pkg.makkahHotel}\n🔹 Hotel Madinah: ${pkg.madinahHotel}\n\n*Fasilitas Unggulan:*\n${pkg.highlightFeatures.map((f) => `• ${f}`).join('\n')}\n\n📍 Kantor MKB Travel: ${company.address}\n📞 Hubungi Hotline WA: ${company.whatsappDisplay}\n🌐 Website: ${company.website}`;
+  window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
+}

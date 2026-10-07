@@ -2,114 +2,101 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { PaymentTransaction } from '../../types';
 import { COMPANY_INFO } from '../../data/mockData';
+import { formatRupiah, formatDateIndo, exportToXlsx, downloadReceiptPdf } from '../../utils/formatters';
+import { Badge, Button, Card, CardHeader, EmptyState, Field, Modal, PageHeader, SearchInput, StatCard } from '../ui';
 import {
-  formatRupiah,
-  formatDateIndo,
-  exportToXlsx,
-  downloadReceiptPdf,
-} from '../../utils/formatters';
-import {
-  Receipt,
-  Plus,
-  FileSpreadsheet,
-  Download,
-  CreditCard,
-  Building,
-  Search,
-  Upload,
   CheckCircle2,
-  UserCheck,
-  FileText,
-  AlertCircle,
+  Download,
+  FileSpreadsheet,
   FileUp,
-  Settings,
+  Landmark,
+  Plus,
+  Receipt,
+  Upload,
+  UserCheck,
+  Wallet,
+  Hourglass,
 } from 'lucide-react';
+
+type Method = PaymentTransaction['paymentMethod'];
+type PayType = PaymentTransaction['paymentType'];
 
 export const FinanceInvoicingView: React.FC = () => {
   const {
     transactions,
     jamaahList,
+    packages,
     addPaymentTransaction,
     setReceiptModalTx,
     customLogo,
-    theme,
     signatoryStaffName,
     setSignatoryStaffName,
     customFinanceFormat,
     setCustomFinanceFormat,
   } = useApp();
 
-  const isDark = theme === 'dark';
-  const [showAddTxModal, setShowAddTxModal] = useState(false);
-  const [showUploadFormatModal, setShowUploadFormatModal] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [query, setQuery] = useState('');
+  const [showAddTx, setShowAddTx] = useState(false);
+  const [showUpload, setShowUpload] = useState(false);
 
-  // Signatory Staff state
-  const [staffNameInput, setStaffNameInput] = useState(signatoryStaffName || 'Umi Kalsum (Finance MKB)');
-  const [isEditingStaff, setIsEditingStaff] = useState(false);
-  const [staffSavedAlert, setStaffSavedAlert] = useState(false);
+  // Staf penandatangan
+  const [staffInput, setStaffInput] = useState(signatoryStaffName);
+  const [editingStaff, setEditingStaff] = useState(false);
+  const [staffSaved, setStaffSaved] = useState(false);
 
-  // Form states for new payment
-  const [selectedJamaahId, setSelectedJamaahId] = useState('');
-  const [amount, setAmount] = useState<number>(5000000);
-  const [paymentMethod, setPaymentMethod] = useState<
-    'Transfer BSI' | 'Transfer Mandiri' | 'Tunai di Kantor' | 'BSI QRIS'
-  >('Transfer BSI');
-  const [paymentType, setPaymentType] = useState<
-    'DP Pendaftaran' | 'Cicilan Ke-1' | 'Cicilan Ke-2' | 'Pelunasan Akhir'
-  >('DP Pendaftaran');
+  // Form pembayaran
+  const [jamaahId, setJamaahId] = useState('');
+  const [amount, setAmount] = useState(5000000);
+  const [method, setMethod] = useState<Method>('Transfer BSI');
+  const [payType, setPayType] = useState<PayType>('DP Pendaftaran');
   const [notes, setNotes] = useState('');
 
-  // Upload Format Keuangan state
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const [parsedPreviewRows, setParsedPreviewRows] = useState<any[]>([]);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
+  // Upload format khusus
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<{ no: string; jamaah: string; type: string; amount: number }[]>([]);
+  const [uploadOk, setUploadOk] = useState(false);
 
-  const totalRevenue = transactions.reduce((acc, t) => acc + t.amount, 0);
-  const totalReceivables = jamaahList.reduce(
-    (acc, j) => acc + (j.totalCost - j.amountPaid),
-    0
+  const totalRevenue = transactions.reduce((a, t) => a + t.amount, 0);
+  const totalReceivables = jamaahList.reduce((a, j) => a + (j.totalCost - j.amountPaid), 0);
+  const lunas = jamaahList.filter((j) => j.paymentStatus === 'Lunas').length;
+
+  const s = query.toLowerCase();
+  const rows = transactions.filter(
+    (t) => t.jamaahName.toLowerCase().includes(s) || t.receiptNumber.toLowerCase().includes(s) || t.invoiceNumber.toLowerCase().includes(s)
   );
 
-  const filteredTx = transactions.filter(
-    (t) =>
-      t.jamaahName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.receiptNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const handleSaveStaffName = (e: React.FormEvent) => {
+  const saveStaff = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!staffNameInput.trim()) return;
-    setSignatoryStaffName(staffNameInput.trim());
-    setIsEditingStaff(false);
-    setStaffSavedAlert(true);
-    setTimeout(() => setStaffSavedAlert(false), 3000);
+    if (!staffInput.trim()) return;
+    setSignatoryStaffName(staffInput.trim());
+    setEditingStaff(false);
+    setStaffSaved(true);
+    setTimeout(() => setStaffSaved(false), 3000);
   };
 
-  const handleAddSubmit = (e: React.FormEvent) => {
+  const submitPayment = (e: React.FormEvent) => {
     e.preventDefault();
-    const j = jamaahList.find((item) => item.id === selectedJamaahId);
+    const j = jamaahList.find((x) => x.id === jamaahId);
     if (!j) return;
-
-    const newTx = addPaymentTransaction({
+    const tx = addPaymentTransaction({
       invoiceNumber: `INV-MKB-${Date.now().toString().slice(-6)}`,
       jamaahId: j.id,
       jamaahName: j.fullName,
-      packageName: 'Paket Umroh MKB',
+      packageName: packages.find((p) => p.id === j.packageId)?.name || 'Paket Umroh MKB',
       amount: Number(amount),
       paymentDate: new Date().toISOString().split('T')[0],
-      paymentMethod,
-      paymentType,
+      paymentMethod: method,
+      paymentType: payType,
       notes,
-      verifiedBy: signatoryStaffName || staffNameInput || 'Umi Kalsum (Finance MKB)',
+      verifiedBy: signatoryStaffName,
     });
-
-    setShowAddTxModal(false);
-    setReceiptModalTx(newTx);
+    setShowAddTx(false);
+    setNotes('');
+    setJamaahId('');
+    setReceiptModalTx(tx);
   };
 
-  const handleDownloadTemplateFormat = () => {
+  const downloadTemplate = () => {
     const headers = [
       'NO_BUKTI_TRANSAKSI',
       'TANGGAL_BAYAR (YYYY-MM-DD)',
@@ -122,894 +109,372 @@ export const FinanceInvoicingView: React.FC = () => {
       'NAMA_STAF_VERIFIKATOR',
       'KETERANGAN_TAMBAHAN',
     ];
-
-    const sampleRows = [
-      [
-        'KW-MKB-202611-001',
-        '2026-11-01',
-        'Ahmad Subagyo, S.T.',
-        '3471012903820001',
-        'Umroh Sebulan Penuh November (30 Hari)',
-        'DP Pendaftaran',
-        'Transfer BSI',
-        5000000,
-        signatoryStaffName || 'Umi Kalsum (Finance MKB)',
-        'DP awal pendaftaran via transfer BSI Rek 7192839102',
-      ],
-      [
-        'KW-MKB-202611-002',
-        '2026-11-05',
-        'Hj. Siti Nurhaliza',
-        '3471025510840003',
-        'Umroh Ramadan Iktikaf Lailatul Qadar (16 Hari)',
-        'Pelunasan Akhir',
-        'Transfer Mandiri',
-        38500000,
-        signatoryStaffName || 'Umi Kalsum (Finance MKB)',
-        'Pelunasan tuntas sebelum issued visa',
-      ],
+    const sample = [
+      ['KW-MKB-202611-001', '2026-11-01', 'Ahmad Subagyo, S.T.', '3471012903820001', 'Umroh Sebulan Penuh November (30 Hari)', 'DP Pendaftaran', 'Transfer BSI', 5000000, signatoryStaffName, 'DP awal pendaftaran via transfer BSI Rek 7192839102'],
+      ['KW-MKB-202611-002', '2026-11-05', 'Hj. Siti Nurhaliza', '3471025510840003', 'Umroh Ramadan Iktikaf Lailatul Qadar (16 Hari)', 'Pelunasan Akhir', 'Transfer Mandiri', 38500000, signatoryStaffName, 'Pelunasan tuntas sebelum issued visa'],
     ];
-
-    exportToXlsx('Format_Khusus_Keuangan_MKB_Travel_Template', headers, sampleRows);
+    exportToXlsx('Format_Khusus_Keuangan_MKB_Travel_Template', headers, sample);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFile(f);
+    // Pratinjau simulasi (parsing file belum diimplementasikan)
+    setPreview([
+      { no: 'MUT-001', jamaah: 'Drs. Bambang Sudarmono', type: 'Cicilan Ke-1', amount: 15000000 },
+      { no: 'MUT-002', jamaah: 'Fatimah Az-Zahra', type: 'Pelunasan Akhir', amount: 22000000 },
+      { no: 'MUT-003', jamaah: 'Rahmat Hidayat', type: 'DP Pendaftaran', amount: 5000000 },
+    ]);
+  };
+
+  const applyFormat = () => {
     if (!file) return;
-
-    setUploadedFile(file);
-    // Generate simulated preview rows based on selected file
-    const simulatedRows = [
-      {
-        no: 'MUT-001',
-        date: '2026-11-08',
-        jamaah: 'Drs. Bambang Sudarmono',
-        type: 'Cicilan Ke-1',
-        method: 'Transfer BSI',
-        amount: 15000000,
-        verifiedBy: signatoryStaffName,
-        status: 'Valid Format',
-      },
-      {
-        no: 'MUT-002',
-        date: '2026-11-08',
-        jamaah: 'Fatimah Az-Zahra',
-        type: 'Pelunasan Akhir',
-        method: 'Transfer Mandiri',
-        amount: 22000000,
-        verifiedBy: signatoryStaffName,
-        status: 'Valid Format',
-      },
-      {
-        no: 'MUT-003',
-        date: '2026-11-07',
-        jamaah: 'Rahmat Hidayat',
-        type: 'DP Pendaftaran',
-        method: 'Tunai di Kantor',
-        amount: 5000000,
-        verifiedBy: signatoryStaffName,
-        status: 'Valid Format',
-      },
-    ];
-
-    setParsedPreviewRows(simulatedRows);
-  };
-
-  const handleApplyCustomFormat = () => {
-    if (!uploadedFile) return;
-
     setCustomFinanceFormat({
-      fileName: uploadedFile.name,
-      uploadDate: new Date().toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      rowCount: parsedPreviewRows.length,
+      fileName: file.name,
+      uploadDate: new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+      rowCount: preview.length,
     });
-
-    setUploadSuccess(true);
+    setUploadOk(true);
     setTimeout(() => {
-      setUploadSuccess(false);
-      setShowUploadFormatModal(false);
-      setUploadedFile(null);
-      setParsedPreviewRows([]);
+      setUploadOk(false);
+      setShowUpload(false);
+      setFile(null);
+      setPreview([]);
     }, 1500);
   };
 
-  const handleExportXlsx = () => {
-    const headers = [
-      'NOMOR KWITANSI',
-      'NOMOR INVOICE',
-      'NAMA JAMAAH',
-      'PROGRAM UMROH',
-      'JUMLAH BAYAR (IDR)',
-      'TANGGAL BAYAR',
-      'METODE PEMBAYARAN',
-      'JENIS PEMBAYARAN',
-      'PENANDATANGAN KASIR',
-      'CATATAN',
-    ];
-
-    const rows = filteredTx.map((t) => [
-      t.receiptNumber,
-      t.invoiceNumber,
-      t.jamaahName,
-      t.packageName,
-      t.amount,
-      t.paymentDate,
-      t.paymentMethod,
-      t.paymentType,
-      signatoryStaffName || t.verifiedBy,
-      t.notes || '-',
-    ]);
-
-    exportToXlsx('Laporan_Keuangan_MKB_Travel', headers, rows);
+  const exportReport = () => {
+    const headers = ['NOMOR KWITANSI', 'NOMOR INVOICE', 'NAMA JAMAAH', 'PROGRAM UMROH', 'JUMLAH BAYAR (IDR)', 'TANGGAL BAYAR', 'METODE PEMBAYARAN', 'JENIS PEMBAYARAN', 'PENANDATANGAN KASIR', 'CATATAN'];
+    exportToXlsx(
+      'Laporan_Keuangan_MKB_Travel',
+      headers,
+      rows.map((t) => [t.receiptNumber, t.invoiceNumber, t.jamaahName, t.packageName, t.amount, t.paymentDate, t.paymentMethod, t.paymentType, t.verifiedBy || signatoryStaffName, t.notes || '-'])
+    );
   };
 
+  const selected = jamaahList.find((j) => j.id === jamaahId);
+  const bank = COMPANY_INFO.bankAccounts[0];
+
   return (
-    <div className="space-y-6 font-sans">
-      {/* Top Header */}
-      <div
-        className={`p-5 rounded-xl border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors ${
-          isDark
-            ? 'bg-[#22211f] border-[#33312e] text-[#f4f3ef]'
-            : 'bg-white border-[#e8e5dc] text-[#23211e]'
-        }`}
-      >
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#f27244]" />
-            <h2 className="text-base font-bold">
-              Keuangan, Kwitansi Digital &amp; Format Khusus
-            </h2>
+    <div className="space-y-6">
+      <PageHeader
+        title="Keuangan & kwitansi"
+        description="Catat pembayaran jamaah, terbitkan kwitansi resmi, dan unduh laporan."
+        actions={
+          <>
+            <Button icon={FileUp} onClick={() => setShowUpload(true)}>
+              Format Khusus
+            </Button>
+            <Button icon={FileSpreadsheet} onClick={exportReport}>
+              Export Excel
+            </Button>
+            <Button variant="primary" icon={Plus} onClick={() => setShowAddTx(true)}>
+              Catat Pembayaran
+            </Button>
+          </>
+        }
+      />
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Kas diterima" value={formatRupiah(totalRevenue)} icon={Wallet} tone="success" hint={`${transactions.length} transaksi sah`} />
+        <StatCard label="Sisa piutang" value={formatRupiah(totalReceivables)} icon={Hourglass} tone="warning" hint="Menunggu pelunasan" />
+        <StatCard label="Jamaah lunas" value={`${lunas}/${jamaahList.length}`} icon={CheckCircle2} tone="accent" hint="Sudah melunasi paket" />
+        <div className="flex flex-col rounded-[20px] bg-night p-5 text-night-ink">
+          <div className="flex items-center justify-between text-[13px] text-night-muted">
+            Rekening resmi <Landmark className="size-4" />
           </div>
-          <p
-            className={`text-xs mt-0.5 ${
-              isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-            }`}
-          >
-            Penerimaan kas, verifikasi kwitansi resmi ber-tanda tangan staf, serta upload laporan format khusus.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Button Upload Format Keuangan Khusus */}
-          <button
-            onClick={() => setShowUploadFormatModal(true)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors cursor-pointer ${
-              isDark
-                ? 'bg-[#2a2926] hover:bg-[#343330] text-[#f27244] border-[#482c22]'
-                : 'bg-[#fff5f1] hover:bg-[#ffece4] text-[#c8471b] border-[#fed7c8]'
-            }`}
-          >
-            <FileUp className="w-4 h-4 text-[#f27244]" />
-            <span>Upload Format Khusus</span>
-          </button>
-
-          <button
-            onClick={handleExportXlsx}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
-              isDark
-                ? 'bg-[#2a2926] hover:bg-[#343330] text-[#d6d3cb] border-[#383633]'
-                : 'bg-[#f7f6f2] hover:bg-[#eeebe3] text-[#4a4740] border-[#dedbd2]'
-            }`}
-          >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-500" />
-            <span>Export Excel (.xlsx)</span>
-          </button>
-
-          <button
-            onClick={() => setShowAddTxModal(true)}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#f27244] hover:bg-[#e06336] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
-          >
-            <Plus className="w-4 h-4" />
-            <span>+ Catat Pembayaran</span>
-          </button>
+          <div className="num mt-4 font-mono text-lg font-bold">{bank.accountNumber}</div>
+          <div className="mt-1 text-xs text-night-muted">{bank.bank}</div>
+          <div className="mt-auto truncate pt-3 text-[11px] text-night-muted">a.n. {bank.accountName}</div>
         </div>
       </div>
 
-      {/* Staff Signatory Configuration Bar & Custom Format Status */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Card 1: Pengisian Nama Staf Penandatangan Dokumen & Kwitansi */}
-        <div
-          className={`p-4 rounded-xl border shadow-xs transition-colors ${
-            isDark ? 'bg-[#22211f] border-[#33312e]' : 'bg-white border-[#e8e5dc]'
-          }`}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <div className="w-7 h-7 rounded-lg bg-[#f27244]/15 text-[#f27244] flex items-center justify-center">
-                <UserCheck className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold block">
-                  Staf Penandatangan Dokumen &amp; Kwitansi
-                </span>
-                <span
-                  className={`text-[10px] ${
-                    isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-                  }`}
-                >
-                  Tercetak otomatis pada cap &amp; tanda tangan kwitansi PDF
-                </span>
-              </div>
-            </div>
-
-            {!isEditingStaff && (
-              <button
-                onClick={() => setIsEditingStaff(true)}
-                className="text-xs font-semibold text-[#f27244] hover:underline cursor-pointer"
-              >
-                Ubah Nama &rarr;
-              </button>
-            )}
-          </div>
-
-          {isEditingStaff ? (
-            <form onSubmit={handleSaveStaffName} className="flex items-center gap-2 mt-2">
-              <input
-                type="text"
-                required
-                value={staffNameInput}
-                onChange={(e) => setStaffNameInput(e.target.value)}
-                placeholder="Contoh: Umi Kalsum (Finance MKB) / Muhammad Rizky"
-                className={`flex-1 p-2 text-xs rounded-lg border font-semibold ${
-                  isDark
-                    ? 'bg-[#1a1918] border-[#383633] text-[#f4f3ef]'
-                    : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e]'
-                }`}
-              />
-              <button
-                type="submit"
-                className="px-3 py-2 bg-[#f27244] hover:bg-[#e06336] text-white rounded-lg text-xs font-semibold cursor-pointer"
-              >
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <Card pad>
+          <CardHeader
+            icon={UserCheck}
+            title="Staf penandatangan kwitansi"
+            subtitle="Tercetak otomatis pada kwitansi PDF"
+            actions={
+              !editingStaff && (
+                <Button size="sm" variant="ghost" onClick={() => setEditingStaff(true)}>
+                  Ubah
+                </Button>
+              )
+            }
+          />
+          {editingStaff ? (
+            <form onSubmit={saveStaff} className="mt-4 flex gap-2">
+              <input className="input" required value={staffInput} onChange={(e) => setStaffInput(e.target.value)} autoFocus />
+              <Button type="submit" variant="primary" className="h-10">
                 Simpan
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
+                className="h-10"
                 onClick={() => {
-                  setStaffNameInput(signatoryStaffName);
-                  setIsEditingStaff(false);
+                  setStaffInput(signatoryStaffName);
+                  setEditingStaff(false);
                 }}
-                className={`px-2.5 py-2 rounded-lg text-xs ${
-                  isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-                }`}
               >
                 Batal
-              </button>
+              </Button>
             </form>
           ) : (
-            <div className="flex items-center justify-between p-2.5 rounded-lg bg-black/5 dark:bg-white/5 border border-dashed border-[#f27244]/40 mt-1">
-              <div>
-                <div className="text-[10px] uppercase font-bold tracking-wider text-[#f27244]">
-                  Nama Staf Aktif:
-                </div>
-                <div className="text-sm font-bold font-sans">
-                  {signatoryStaffName || 'Umi Kalsum (Finance MKB)'}
-                </div>
-              </div>
-              <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
-                Aktif di Kwitansi
-              </span>
+            <div className="mt-4 flex items-center justify-between rounded-2xl bg-subtle px-4 py-3">
+              <span className="text-sm font-semibold text-ink">{signatoryStaffName}</span>
+              <Badge tone="success" dot>
+                Aktif
+              </Badge>
             </div>
           )}
+          {staffSaved && <p className="mt-2 text-xs font-medium text-emerald-600 dark:text-emerald-400">Nama staf penandatangan diperbarui.</p>}
+        </Card>
 
-          {staffSavedAlert && (
-            <div className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-1 flex items-center gap-1 font-semibold">
-              <CheckCircle2 className="w-3.5 h-3.5" />
-              <span>Nama staf penandatangan berhasil diperbarui!</span>
-            </div>
-          )}
-        </div>
-
-        {/* Card 2: Status Format Khusus Keuangan */}
-        <div
-          className={`p-4 rounded-xl border shadow-xs transition-colors flex flex-col justify-between ${
-            isDark ? 'bg-[#22211f] border-[#33312e]' : 'bg-white border-[#e8e5dc]'
-          }`}
-        >
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-lg bg-emerald-500/15 text-emerald-500 flex items-center justify-center">
-                  <FileSpreadsheet className="w-4 h-4" />
+        <Card pad>
+          <CardHeader
+            icon={FileSpreadsheet}
+            title="Format khusus laporan"
+            subtitle="Rekap mutasi rekening & setoran kas tunai"
+            actions={
+              <Button size="sm" variant="ghost" icon={Download} onClick={downloadTemplate}>
+                Template
+              </Button>
+            }
+          />
+          {customFinanceFormat ? (
+            <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl bg-emerald-500/10 px-4 py-3">
+              <div className="min-w-0">
+                <div className="truncate text-sm font-semibold text-ink">{customFinanceFormat.fileName}</div>
+                <div className="text-[11px] text-muted">
+                  {customFinanceFormat.uploadDate} · {customFinanceFormat.rowCount} baris
                 </div>
-                <span className="text-xs font-bold">
-                  Format Khusus Laporan Keuangan
-                </span>
               </div>
-              <button
-                onClick={handleDownloadTemplateFormat}
-                className="text-[11px] text-emerald-600 dark:text-emerald-400 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
-              >
-                <Download className="w-3 h-3" />
-                <span>Download Template (.xlsx)</span>
+              <Badge tone="success">Terhubung</Badge>
+            </div>
+          ) : (
+            <div className="mt-4 flex items-center justify-between rounded-2xl border border-dashed border-line-strong px-4 py-3 text-xs text-muted">
+              Belum ada format yang diunggah.
+              <button className="font-semibold text-accent hover:underline" onClick={() => setShowUpload(true)}>
+                Unggah
               </button>
             </div>
-
-            {customFinanceFormat ? (
-              <div className="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-xs mt-2 space-y-1">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-emerald-700 dark:text-emerald-300 truncate">
-                    {customFinanceFormat.fileName}
-                  </span>
-                  <span className="text-[10px] font-mono bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 px-1.5 py-0.5 rounded">
-                    Terhubung
-                  </span>
-                </div>
-                <div
-                  className={`text-[10px] ${
-                    isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-                  }`}
-                >
-                  Diunggah: {customFinanceFormat.uploadDate} ({customFinanceFormat.rowCount} baris transaksi)
-                </div>
-              </div>
-            ) : (
-              <div
-                className={`p-2.5 rounded-lg border border-dashed text-xs mt-2 flex items-center justify-between ${
-                  isDark
-                    ? 'border-[#383633] text-[#9c988f]'
-                    : 'border-[#dedbd2] text-[#737069]'
-                }`}
-              >
-                <span>Format keuangan khusus belum diunggah.</span>
-                <button
-                  onClick={() => setShowUploadFormatModal(true)}
-                  className="text-xs font-bold text-[#f27244] hover:underline cursor-pointer"
-                >
-                  Upload Sekarang &rarr;
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div
-            className={`text-[10px] mt-2 ${
-              isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-            }`}
-          >
-            Format khusus memuat rekapitulasi mutasi rekening bank dan setoran kas tunai kantor.
-          </div>
-        </div>
+          )}
+        </Card>
       </div>
 
-      {/* Summary Cards with Myriad Bold Prices */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div
-          className={`p-4 rounded-xl border shadow-xs transition-colors ${
-            isDark
-              ? 'bg-[#22211f] border-[#33312e]'
-              : 'bg-white border-[#e8e5dc]'
-          }`}
-        >
-          <div
-            className={`text-xs mb-1 ${
-              isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-            }`}
-          >
-            Total Kas Diterima (Myriad Bold)
-          </div>
-          <div
-            className={`text-xl font-bold font-price-myriad ${
-              isDark ? 'text-[#f4f3ef]' : 'text-[#1e1d1b]'
-            }`}
-          >
-            {formatRupiah(totalRevenue)}
-          </div>
-          <div
-            className={`text-[11px] mt-1 ${
-              isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-            }`}
-          >
-            {transactions.length} transaksi tercatat sah
-          </div>
+      <Card className="overflow-hidden">
+        <div className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+          <CardHeader icon={Receipt} title="Riwayat kwitansi" subtitle={`${rows.length} kwitansi diterbitkan`} />
+          <SearchInput value={query} onChange={setQuery} placeholder="Cari jamaah atau nomor kwitansi…" className="sm:w-72" />
         </div>
-
-        <div
-          className={`p-4 rounded-xl border shadow-xs transition-colors ${
-            isDark
-              ? 'bg-[#22211f] border-[#33312e]'
-              : 'bg-white border-[#e8e5dc]'
-          }`}
-        >
-          <div
-            className={`text-xs mb-1 ${
-              isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-            }`}
-          >
-            Sisa Piutang Berjalan (Myriad Bold)
-          </div>
-          <div className="text-xl font-bold text-amber-500 font-price-myriad">
-            {formatRupiah(totalReceivables)}
-          </div>
-          <div
-            className={`text-[11px] mt-1 ${
-              isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-            }`}
-          >
-            Menunggu pelunasan bertahap jamaah
-          </div>
-        </div>
-
-        <div
-          className={`p-4 rounded-xl border shadow-xs flex flex-col justify-between transition-colors ${
-            isDark
-              ? 'bg-[#1b1a19] border-[#33312e] text-[#f4f3ef]'
-              : 'bg-[#faf9f6] border-[#e8e5dc] text-[#23211e]'
-          }`}
-        >
-          <div className="flex items-center justify-between text-xs text-[#f27244] font-semibold">
-            <span>REKENING RESMI PERUSAHAAN</span>
-            <Building className="w-3.5 h-3.5" />
-          </div>
-          <div className="my-1 font-mono font-bold text-sm">
-            {COMPANY_INFO.bankAccounts[0].bank}: {COMPANY_INFO.bankAccounts[0].accountNumber}
-          </div>
-          <div
-            className={`text-[11px] ${
-              isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-            }`}
-          >
-            a.n. {COMPANY_INFO.bankAccounts[0].accountName}
-          </div>
-        </div>
-      </div>
-
-      {/* Transactions Table */}
-      <div
-        className={`rounded-xl border shadow-xs overflow-hidden transition-colors ${
-          isDark
-            ? 'bg-[#22211f] border-[#33312e]'
-            : 'bg-white border-[#e8e5dc]'
-        }`}
-      >
-        <div
-          className={`p-3 border-b flex items-center justify-between ${
-            isDark ? 'border-[#2d2c29]' : 'border-[#eeece6]'
-          }`}
-        >
-          <div className="relative w-72">
-            <Search className="w-4 h-4 text-[#737069] absolute left-3 top-2" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari jamaah atau nomor kuitansi..."
-              className={`w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border focus:outline-none focus:ring-1 focus:ring-[#f27244] ${
-                isDark
-                  ? 'bg-[#1a1918] border-[#33312e] text-[#f4f3ef] placeholder-[#737069]'
-                  : 'bg-[#fbfaf8] border-[#dedbd2] text-[#23211e] placeholder-[#8c8982]'
-              }`}
-            />
-          </div>
-          <span
-            className={`text-xs ${
-              isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-            }`}
-          >
-            Total {filteredTx.length} kuitansi diterbitkan
-          </span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead
-              className={`border-b font-semibold ${
-                isDark
-                  ? 'bg-[#1e1d1b] border-[#2d2c29] text-[#9c988f]'
-                  : 'bg-[#faf9f6] border-[#eeece6] text-[#737069]'
-              }`}
-            >
+        <div className="overflow-x-auto border-t border-line">
+          <table className="table min-w-[1040px]">
+            <thead>
               <tr>
-                <th className="py-2.5 px-4">Nomor Kuitansi</th>
-                <th className="py-2.5 px-3">Nama Jamaah</th>
-                <th className="py-2.5 px-3">Jenis Pembayaran</th>
-                <th className="py-2.5 px-3">Metode Bayar</th>
-                <th className="py-2.5 px-3">Jumlah Masuk (Myriad Bold)</th>
-                <th className="py-2.5 px-3">Staf Verifikator</th>
-                <th className="py-2.5 px-4 text-right">Aksi</th>
+                <th>No. kwitansi</th>
+                <th>Jamaah</th>
+                <th>Jenis</th>
+                <th>Metode</th>
+                <th className="text-right">Jumlah</th>
+                <th>Verifikator</th>
+                <th className="text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody
-              className={`divide-y ${
-                isDark
-                  ? 'divide-[#2d2c29] text-[#d6d3cb]'
-                  : 'divide-[#f0ede6] text-[#33302b]'
-              }`}
-            >
-              {filteredTx.map((tx) => (
-                <tr
-                  key={tx.id}
-                  className={`transition-colors ${
-                    isDark ? 'hover:bg-[#282724]' : 'hover:bg-[#fbfaf7]'
-                  }`}
-                >
-                  <td className="py-3 px-4 font-mono font-semibold">
-                    <span className={isDark ? 'text-[#f4f3ef]' : 'text-[#1e1d1b]'}>
-                      {tx.receiptNumber}
-                    </span>
-                    <div
-                      className={`text-[10px] font-normal ${
-                        isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-                      }`}
+            <tbody>
+              {rows.length === 0 && (
+                <tr>
+                  <td colSpan={7}>
+                    <EmptyState icon={Receipt} title="Tidak ada kwitansi yang cocok" />
+                  </td>
+                </tr>
+              )}
+              {rows.map((tx) => (
+                <tr key={tx.id}>
+                  <td>
+                    <div className="font-mono text-xs font-semibold whitespace-nowrap text-ink">{tx.receiptNumber}</div>
+                    <div className="mt-0.5 text-[11px] text-muted">{formatDateIndo(tx.paymentDate)}</div>
+                  </td>
+                  <td>
+                    <div className="font-semibold text-ink">{tx.jamaahName}</div>
+                    <div className="mt-0.5 text-[11px] text-muted">{tx.packageName}</div>
+                  </td>
+                  <td>
+                    <Badge tone={tx.paymentType === 'Pelunasan Akhir' ? 'success' : 'neutral'}>{tx.paymentType}</Badge>
+                  </td>
+                  <td className="whitespace-nowrap text-muted">{tx.paymentMethod}</td>
+                  <td className="num text-right font-bold whitespace-nowrap text-ink">{formatRupiah(tx.amount)}</td>
+                  <td className="text-xs text-muted">{tx.verifiedBy || signatoryStaffName}</td>
+                  <td className="text-right whitespace-nowrap">
+                    <Button size="sm" onClick={() => setReceiptModalTx(tx)}>
+                      Kwitansi
+                    </Button>{' '}
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      icon={Download}
+                      onClick={() => downloadReceiptPdf(tx, COMPANY_INFO, customLogo, tx.verifiedBy || signatoryStaffName)}
                     >
-                      {tx.paymentDate}
-                    </div>
-                  </td>
-                  <td
-                    className={`py-3 px-3 font-semibold ${
-                      isDark ? 'text-[#f4f3ef]' : 'text-[#1e1d1b]'
-                    }`}
-                  >
-                    {tx.jamaahName}
-                  </td>
-                  <td className="py-3 px-3">
-                    <span className={isDark ? 'text-[#f4f3ef]' : 'text-[#1e1d1b]'}>
-                      {tx.paymentType}
-                    </span>
-                    <div
-                      className={`text-[10px] ${
-                        isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-                      }`}
-                    >
-                      {tx.packageName}
-                    </div>
-                  </td>
-                  <td
-                    className={`py-3 px-3 ${
-                      isDark ? 'text-[#a6a39b]' : 'text-[#6b6760]'
-                    }`}
-                  >
-                    {tx.paymentMethod}
-                  </td>
-                  <td className="py-3 px-3 font-bold font-price-myriad text-[#f27244]">
-                    {formatRupiah(tx.amount)}
-                  </td>
-                  <td className="py-3 px-3 text-[11px] font-medium opacity-85">
-                    {tx.verifiedBy || signatoryStaffName}
-                  </td>
-                  <td className="py-3 px-4 text-right space-x-2 whitespace-nowrap">
-                    <button
-                      onClick={() => setReceiptModalTx(tx)}
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors cursor-pointer ${
-                        isDark
-                          ? 'text-[#f27244] bg-[#2d1e18] hover:bg-[#3d281f] border-[#482c22]'
-                          : 'text-[#e06336] bg-[#fff0eb] hover:bg-[#ffdacf] border-[#ffccba]'
-                      }`}
-                    >
-                      Buka Kuitansi
-                    </button>
-                    <button
-                      onClick={() =>
-                        downloadReceiptPdf(
-                          tx,
-                          COMPANY_INFO,
-                          customLogo,
-                          signatoryStaffName || tx.verifiedBy
-                        )
-                      }
-                      className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors inline-flex items-center gap-1 cursor-pointer ${
-                        isDark
-                          ? 'text-[#d6d3cb] bg-[#2a2926] hover:bg-[#33312e] border-[#383633]'
-                          : 'text-[#4a4740] bg-[#f7f6f2] hover:bg-[#eeebe3] border-[#dedbd2]'
-                      }`}
-                      title="Download PDF Langsung"
-                    >
-                      <Download className="w-3 h-3 text-emerald-500" />
-                      <span>PDF</span>
-                    </button>
+                      PDF
+                    </Button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
 
-      {/* Modal 1: Upload Format Keuangan Khusus */}
-      {showUploadFormatModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div
-            className={`rounded-2xl max-w-xl w-full p-6 shadow-2xl border space-y-4 ${
-              isDark
-                ? 'bg-[#22211f] border-[#33312e] text-[#f4f3ef]'
-                : 'bg-white border-[#dedbd2] text-[#23211e]'
-            }`}
-          >
-            <div className="flex items-center justify-between pb-2 border-b border-gray-200 dark:border-gray-800">
-              <div className="flex items-center gap-2">
-                <FileUp className="w-5 h-5 text-[#f27244]" />
-                <h3 className="text-sm font-bold">
-                  Upload Format Khusus Laporan Keuangan MKB
-                </h3>
-              </div>
-              <button
-                onClick={() => setShowUploadFormatModal(false)}
-                className="text-gray-400 hover:text-gray-600 text-lg leading-none"
-              >
-                &times;
-              </button>
-            </div>
-
-            <p
-              className={`text-xs ${
-                isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-              }`}
-            >
-              Upload satu format khusus rekapan transaksi (.xlsx / .csv) sesuai standarisasi keuangan backoffice. Anda dapat mengunduh format resminya terlebih dahulu.
-            </p>
-
-            <div className="flex items-center justify-between p-3 rounded-lg bg-black/5 dark:bg-white/5 border border-dashed border-[#f27244]/40">
-              <span className="text-xs">
-                Belum punya template format khusus?
-              </span>
-              <button
-                onClick={handleDownloadTemplateFormat}
-                className="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded text-xs font-semibold flex items-center gap-1 cursor-pointer"
-              >
-                <Download className="w-3.5 h-3.5" />
-                <span>Unduh Format Template</span>
-              </button>
-            </div>
-
-            {/* Dropzone */}
-            <div
-              className={`p-6 border-2 border-dashed rounded-xl text-center space-y-2 cursor-pointer transition-colors ${
-                isDark
-                  ? 'border-[#3d3b37] hover:border-[#f27244] bg-[#1a1918]'
-                  : 'border-[#dedbd2] hover:border-[#f27244] bg-[#faf9f6]'
-              }`}
-            >
-              <input
-                type="file"
-                id="custom-finance-file"
-                accept=".xlsx,.xls,.csv"
-                onChange={handleFileChange}
-                className="hidden"
-              />
-              <label
-                htmlFor="custom-finance-file"
-                className="cursor-pointer block space-y-2"
-              >
-                <Upload className="w-8 h-8 mx-auto text-[#f27244]" />
-                <div className="text-xs font-semibold">
-                  {uploadedFile
-                    ? uploadedFile.name
-                    : 'Pilih File Format Keuangan Khusus (.xlsx / .csv)'}
-                </div>
-                <div
-                  className={`text-[10px] ${
-                    isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-                  }`}
-                >
-                  Klik untuk mencari file di komputer Anda
-                </div>
-              </label>
-            </div>
-
-            {/* Preview of Parsed Rows if file selected */}
-            {parsedPreviewRows.length > 0 && (
-              <div className="space-y-2">
-                <div className="text-xs font-bold flex items-center justify-between">
-                  <span>Pratinjau Data Format Khusus ({parsedPreviewRows.length} Baris):</span>
-                  <span className="text-[10px] text-emerald-500 font-mono">
-                    Struktur Kolom Sesuai &#10003;
-                  </span>
-                </div>
-                <div className="max-h-40 overflow-y-auto border rounded-lg text-[11px]">
-                  <table className="w-full text-left">
-                    <thead className="bg-black/10 dark:bg-white/10 font-semibold">
-                      <tr>
-                        <th className="p-1.5">No</th>
-                        <th className="p-1.5">Jamaah</th>
-                        <th className="p-1.5">Jenis</th>
-                        <th className="p-1.5 text-right">Nominal</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-800">
-                      {parsedPreviewRows.map((r, i) => (
-                        <tr key={i}>
-                          <td className="p-1.5 font-mono">{r.no}</td>
-                          <td className="p-1.5 font-semibold">{r.jamaah}</td>
-                          <td className="p-1.5">{r.type}</td>
-                          <td className="p-1.5 text-right font-mono text-[#f27244]">
-                            {formatRupiah(r.amount)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )}
-
-            {uploadSuccess && (
-              <div className="p-2.5 rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>Format keuangan khusus berhasil diunggah dan disimpan di sistem!</span>
-              </div>
-            )}
-
-            <div className="pt-2 flex items-center justify-end gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() => setShowUploadFormatModal(false)}
-                className={`px-3 py-1.5 rounded-lg cursor-pointer ${
-                  isDark ? 'text-[#9c988f] hover:bg-[#282725]' : 'text-[#737069] hover:bg-[#eeebe3]'
-                }`}
-              >
-                Tutup
-              </button>
-              <button
-                type="button"
-                disabled={!uploadedFile}
-                onClick={handleApplyCustomFormat}
-                className="px-4 py-1.5 bg-[#f27244] hover:bg-[#e06336] disabled:opacity-50 text-white font-semibold rounded-lg cursor-pointer"
-              >
-                Terapkan Format Khusus
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Modal 2: Catat Pembayaran Baru */}
-      {showAddTxModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div
-            className={`rounded-2xl max-w-md w-full p-6 shadow-2xl border space-y-4 ${
-              isDark
-                ? 'bg-[#22211f] border-[#33312e] text-[#f4f3ef]'
-                : 'bg-white border-[#dedbd2] text-[#23211e]'
-            }`}
-          >
-            <h3 className="text-sm font-bold">
-              Input Pembayaran Jamaah Baru
-            </h3>
-
-            <form onSubmit={handleAddSubmit} className="space-y-3 text-xs">
+      {/* Modal: catat pembayaran */}
+      <Modal
+        open={showAddTx}
+        onClose={() => setShowAddTx(false)}
+        title="Catat pembayaran"
+        description="Kwitansi resmi langsung terbit setelah disimpan."
+        icon={Wallet}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowAddTx(false)}>
+              Batal
+            </Button>
+            <Button variant="primary" type="submit" form="add-tx-form">
+              Terbitkan Kwitansi
+            </Button>
+          </>
+        }
+      >
+        <form id="add-tx-form" onSubmit={submitPayment} className="space-y-4">
+          <Field label="Jamaah">
+            <select className="input" required value={jamaahId} onChange={(e) => setJamaahId(e.target.value)}>
+              <option value="">Pilih jamaah terdaftar…</option>
+              {jamaahList.map((j) => (
+                <option key={j.id} value={j.id}>
+                  {j.fullName} — sisa {formatRupiah(j.totalCost - j.amountPaid)}
+                </option>
+              ))}
+            </select>
+          </Field>
+          {selected && (
+            <div className="grid grid-cols-3 gap-2 rounded-2xl bg-subtle p-3 text-xs">
               <div>
-                <label className="block font-medium mb-1">
-                  Pilih Nama Jamaah
-                </label>
-                <select
-                  required
-                  value={selectedJamaahId}
-                  onChange={(e) => setSelectedJamaahId(e.target.value)}
-                  className={`w-full p-2 rounded-lg border ${
-                    isDark
-                      ? 'bg-[#1a1918] border-[#33312e] text-[#f4f3ef]'
-                      : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e]'
-                  }`}
-                >
-                  <option value="">-- Pilih Jamaah Terdaftar --</option>
-                  {jamaahList.map((j) => (
-                    <option key={j.id} value={j.id}>
-                      {j.fullName} - {j.phoneWhatsapp} (Sisa: {formatRupiah(j.totalCost - j.amountPaid)})
-                    </option>
+                <div className="text-muted">Total</div>
+                <div className="num font-semibold text-ink">{formatRupiah(selected.totalCost)}</div>
+              </div>
+              <div>
+                <div className="text-muted">Terbayar</div>
+                <div className="num font-semibold text-ink">{formatRupiah(selected.amountPaid)}</div>
+              </div>
+              <div>
+                <div className="text-muted">Sisa</div>
+                <div className="num font-semibold text-accent">{formatRupiah(selected.totalCost - selected.amountPaid)}</div>
+              </div>
+            </div>
+          )}
+          <Field label="Nominal (IDR)" hint={formatRupiah(amount || 0)}>
+            <input
+              className="input num font-semibold"
+              type="number"
+              required
+              min={100000}
+              step={50000}
+              value={amount}
+              onChange={(e) => setAmount(Number(e.target.value))}
+            />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Jenis pembayaran">
+              <select className="input" value={payType} onChange={(e) => setPayType(e.target.value as PayType)}>
+                <option value="DP Pendaftaran">DP Pendaftaran</option>
+                <option value="Cicilan Ke-1">Cicilan Ke-1</option>
+                <option value="Cicilan Ke-2">Cicilan Ke-2</option>
+                <option value="Pelunasan Akhir">Pelunasan Akhir</option>
+              </select>
+            </Field>
+            <Field label="Metode">
+              <select className="input" value={method} onChange={(e) => setMethod(e.target.value as Method)}>
+                <option value="Transfer BSI">Transfer BSI</option>
+                <option value="Transfer Mandiri">Transfer Mandiri</option>
+                <option value="Tunai di Kantor">Tunai di kantor</option>
+                <option value="BSI QRIS">QRIS</option>
+              </select>
+            </Field>
+          </div>
+          <Field label="Staf penandatangan">
+            <input className="input" value={signatoryStaffName} onChange={(e) => setSignatoryStaffName(e.target.value)} />
+          </Field>
+          <Field label="Catatan">
+            <textarea
+              className="input"
+              rows={2}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Contoh: bukti transfer diterima via WhatsApp CS"
+            />
+          </Field>
+        </form>
+      </Modal>
+
+      {/* Modal: upload format khusus */}
+      <Modal
+        open={showUpload}
+        onClose={() => setShowUpload(false)}
+        title="Upload format khusus laporan"
+        description="Satu file rekap transaksi (.xlsx / .csv) sesuai standar keuangan backoffice."
+        icon={FileUp}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setShowUpload(false)}>
+              Tutup
+            </Button>
+            <Button variant="primary" disabled={!file} onClick={applyFormat}>
+              Terapkan Format
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="flex items-center justify-between rounded-2xl bg-subtle px-4 py-3 text-xs text-muted">
+            Belum punya template?
+            <Button size="sm" icon={Download} onClick={downloadTemplate}>
+              Unduh template
+            </Button>
+          </div>
+          <label className="flex cursor-pointer flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-line-strong px-6 py-8 text-center transition-colors hover:border-accent">
+            <input type="file" accept=".xlsx,.xls,.csv" onChange={onFile} className="hidden" />
+            <span className="flex size-11 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+              <Upload className="size-5" />
+            </span>
+            <span className="text-sm font-semibold text-ink">{file ? file.name : 'Pilih file .xlsx / .csv'}</span>
+            <span className="text-xs text-muted">Klik untuk mencari file di komputer</span>
+          </label>
+          {preview.length > 0 && (
+            <div className="overflow-hidden rounded-2xl border border-line">
+              <div className="flex items-center justify-between bg-subtle px-4 py-2.5 text-xs">
+                <span className="font-semibold text-ink">Pratinjau ({preview.length} baris)</span>
+                <span className="text-emerald-600 dark:text-emerald-400">Struktur kolom sesuai ✓</span>
+              </div>
+              <table className="w-full text-xs">
+                <tbody>
+                  {preview.map((r) => (
+                    <tr key={r.no} className="border-t border-line">
+                      <td className="px-4 py-2 font-mono text-muted">{r.no}</td>
+                      <td className="px-2 py-2 font-semibold text-ink">{r.jamaah}</td>
+                      <td className="px-2 py-2 text-muted">{r.type}</td>
+                      <td className="num px-4 py-2 text-right font-semibold text-ink">{formatRupiah(r.amount)}</td>
+                    </tr>
                   ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block font-medium mb-1">
-                  Nominal Pembayaran (IDR)
-                </label>
-                <input
-                  type="number"
-                  required
-                  min="100000"
-                  step="50000"
-                  value={amount}
-                  onChange={(e) => setAmount(Number(e.target.value))}
-                  className={`w-full p-2 rounded-lg border font-mono font-bold ${
-                    isDark
-                      ? 'bg-[#1a1918] border-[#33312e] text-[#f4f3ef]'
-                      : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e]'
-                  }`}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-medium mb-1">
-                    Jenis Pembayaran
-                  </label>
-                  <select
-                    value={paymentType}
-                    onChange={(e) => setPaymentType(e.target.value as any)}
-                    className={`w-full p-2 rounded-lg border ${
-                      isDark
-                        ? 'bg-[#1a1918] border-[#33312e] text-[#f4f3ef]'
-                        : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e]'
-                    }`}
-                  >
-                    <option value="DP Pendaftaran">DP Pendaftaran</option>
-                    <option value="Cicilan Ke-1">Cicilan Ke-1</option>
-                    <option value="Cicilan Ke-2">Cicilan Ke-2</option>
-                    <option value="Pelunasan Akhir">Pelunasan Akhir</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-medium mb-1">
-                    Metode Pembayaran
-                  </label>
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value as any)}
-                    className={`w-full p-2 rounded-lg border ${
-                      isDark
-                        ? 'bg-[#1a1918] border-[#33312e] text-[#f4f3ef]'
-                        : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e]'
-                    }`}
-                  >
-                    <option value="Transfer BSI">Transfer Bank BSI</option>
-                    <option value="Transfer Mandiri">Transfer Mandiri</option>
-                    <option value="Tunai di Kantor">Tunai di Kantor MKB</option>
-                    <option value="BSI QRIS">QRIS Kasir</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block font-medium mb-1">
-                  Staf Penandatangan Kwitansi
-                </label>
-                <input
-                  type="text"
-                  value={signatoryStaffName}
-                  onChange={(e) => setSignatoryStaffName(e.target.value)}
-                  className={`w-full p-2 rounded-lg border ${
-                    isDark
-                      ? 'bg-[#1a1918] border-[#33312e] text-[#f4f3ef]'
-                      : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e]'
-                  }`}
-                />
-              </div>
-
-              <div>
-                <label className="block font-medium mb-1">
-                  Catatan / Keterangan
-                </label>
-                <textarea
-                  rows={2}
-                  value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Contoh: Bukti transfer diterima via WhatsApp CS"
-                  className={`w-full p-2 rounded-lg border ${
-                    isDark
-                      ? 'bg-[#1a1918] border-[#33312e] text-[#f4f3ef]'
-                      : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e]'
-                  }`}
-                />
-              </div>
-
-              <div className="pt-2 flex items-center justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddTxModal(false)}
-                  className={`px-3 py-1.5 rounded-lg cursor-pointer ${
-                    isDark ? 'text-[#9c988f] hover:bg-[#282725]' : 'text-[#737069] hover:bg-[#eeebe3]'
-                  }`}
-                >
-                  Batal
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-1.5 bg-[#f27244] hover:bg-[#e06336] text-white font-semibold rounded-lg cursor-pointer"
-                >
-                  Terbitkan Kwitansi
-                </button>
-              </div>
-            </form>
-          </div>
+                </tbody>
+              </table>
+            </div>
+          )}
+          {uploadOk && (
+            <div className="flex items-center gap-2 rounded-xl bg-emerald-500/10 px-4 py-3 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+              <CheckCircle2 className="size-4" /> Format keuangan khusus berhasil disimpan.
+            </div>
+          )}
         </div>
-      )}
+      </Modal>
     </div>
   );
 };

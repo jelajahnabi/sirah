@@ -188,8 +188,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Dark and Light Mode state
   const [theme, setThemeState] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('mkb_theme_mode');
-    return saved === 'light' ? 'light' : 'dark';
+    return saved === 'dark' ? 'dark' : 'light';
   });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
 
   const setTheme = (newTheme: 'dark' | 'light') => {
     setThemeState(newTheme);
@@ -390,8 +394,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       documentStatus: {
         passportUploaded: Boolean(input.passportFileUrl || input.passportFileName),
         ktpUploaded: Boolean(input.ktpFileUrl || input.ktpFileName),
-        photoUploaded: false,
-        yellowCardUploaded: false,
+        passportOriginal: false,
+        meningitisVaccine: false,
+        biometricPhoto: false,
+        kemenhajRecommendation: false,
       },
       ktpFileUrl: input.ktpFileUrl,
       ktpFileName: input.ktpFileName,

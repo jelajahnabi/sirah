@@ -1,237 +1,120 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
-import { formatRupiah, formatDateIndo } from '../../utils/formatters';
 import { COMPANY_INFO } from '../../data/mockData';
-import {
-  X,
-  Plane,
-  Building,
-  Check,
-  Calendar,
-  Share2,
-} from 'lucide-react';
+import { formatRupiah, formatDateIndo, sharePackageToWhatsApp } from '../../utils/formatters';
+import { Badge, Button, Modal, Progress, packageStatusMeta } from '../ui';
+import { Building2, Check, Compass, Plane, Share2, UserPlus } from 'lucide-react';
 
 export const PackageDetailModal: React.FC = () => {
-  const { selectedPackageDetail, setSelectedPackageDetail, setShowAddJamaahModal, theme } = useApp();
-
-  if (!selectedPackageDetail) return null;
-
-  const isDark = theme === 'dark';
-  const pkg = selectedPackageDetail;
-  const kc = pkg.kanbanColors;
-
-  const handleShareWhatsApp = () => {
-    const text = `Assalamu'alaikum Warahmatullahi Wabarakatuh.\n\nBerikut Informasi Program Resmi dari *${COMPANY_INFO.legalName}*:\n\n*${pkg.name.toUpperCase()}*\n🔹 Harga: *${formatRupiah(pkg.price)}*\n🔹 Durasi: ${pkg.durationDays} Hari (${pkg.departureMonth})\n🔹 Maskapai: ${pkg.airline}\n🔹 Hotel Makkah: ${pkg.makkahHotel}\n🔹 Hotel Madinah: ${pkg.madinahHotel}\n\n*Fasilitas Unggulan:*\n${pkg.highlightFeatures.map((f) => `• ${f}`).join('\n')}\n\n📍 Kantor MKB Travel: ${COMPANY_INFO.address}\n📞 Hubungi Hotline WA: ${COMPANY_INFO.whatsappDisplay}\n🌐 Website: ${COMPANY_INFO.website}`;
-
-    window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
-  };
+  const { selectedPackageDetail: pkg, setSelectedPackageDetail, setShowAddJamaahModal } = useApp();
+  const close = () => setSelectedPackageDetail(null);
+  if (!pkg) return null;
+  const c = pkg.kanbanColors.accent;
+  const status = packageStatusMeta[pkg.status];
 
   return (
-    <div className="fixed inset-0 bg-black/75 backdrop-blur-xs flex items-center justify-center z-50 p-4 overflow-y-auto font-sans">
-      <div
-        className={`rounded-2xl max-w-2xl w-full p-6 shadow-2xl border my-6 space-y-4 transition-colors ${
-          isDark
-            ? 'bg-[#22211f] border-[#33312e] text-[#f4f3ef]'
-            : 'bg-white border-[#dedbd2] text-[#23211e]'
-        }`}
-      >
-        {/* Header */}
-        <div
-          className={`flex items-start justify-between pb-3 border-b ${
-            isDark ? 'border-[#2d2c29]' : 'border-[#eeece6]'
-          }`}
-        >
-          <div>
-            <div className="flex items-center gap-2 text-xs font-mono font-semibold">
-              <span
-                className="px-2 py-0.5 rounded font-bold"
-                style={{
-                  backgroundColor: isDark ? kc.badgeBgDark : kc.badgeBgLight,
-                  color: isDark ? kc.badgeTextDark : kc.badgeTextLight,
-                }}
-              >
-                {pkg.code}
-              </span>
-              <span aria-hidden="true" className="opacity-50">·</span>
-              <span style={{ color: kc.accent }}>{pkg.departureMonth}</span>
-            </div>
-            <h2 className="text-base font-bold mt-1">{pkg.name}</h2>
-            <div
-              className={`text-xs mt-0.5 ${
-                isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-              }`}
-            >
-              Durasi: <strong>{pkg.durationDays} Hari Penuh</strong> · Keberangkatan: {pkg.departureDates.join(', ')}
-            </div>
-          </div>
-
-          <button
-            onClick={() => setSelectedPackageDetail(null)}
-            className={`p-1 rounded-md transition-colors ${
-              isDark ? 'text-[#737069] hover:text-[#f4f3ef]' : 'text-[#9c988f] hover:text-[#23211e]'
-            }`}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Pricing Highlight (Myriad Bold) */}
-        <div
-          className="p-4 rounded-xl border flex items-center justify-between"
-          style={{
-            backgroundColor: isDark ? kc.columnHeaderDark : kc.columnHeaderLight,
-            borderColor: isDark ? kc.columnBorderDark : kc.columnBorderLight,
-          }}
-        >
-          <div>
-            <div
-              className={`text-xs font-semibold ${
-                isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-              }`}
-            >
-              Harga Paket All-In (Myriad Bold):
-            </div>
-            <div
-              className="text-2xl font-bold font-price-myriad mt-0.5"
-              style={{ color: isDark ? '#ffffff' : kc.badgeTextLight }}
-            >
-              {formatRupiah(pkg.price)}
-            </div>
-          </div>
-          <button
-            onClick={handleShareWhatsApp}
-            className="px-3.5 py-1.5 rounded-lg border text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-xs"
-            style={{
-              borderColor: kc.accent,
-              color: kc.accent,
+    <Modal
+      open
+      onClose={close}
+      title={pkg.name}
+      description={`${pkg.code} · ${pkg.durationDays} hari · ${pkg.departureMonth}`}
+      icon={Compass}
+      size="lg"
+      footer={
+        <>
+          <Button icon={Share2} onClick={() => sharePackageToWhatsApp(pkg, COMPANY_INFO)} className="mr-auto">
+            Bagikan ke WA
+          </Button>
+          <Button variant="ghost" onClick={close}>
+            Tutup
+          </Button>
+          <Button
+            variant="primary"
+            icon={UserPlus}
+            onClick={() => {
+              close();
+              setShowAddJamaahModal(true);
             }}
           >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>Bagikan ke WA</span>
-          </button>
+            Daftarkan Jamaah
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-5">
+        <div className="relative overflow-hidden rounded-2xl bg-night p-5 text-night-ink">
+          <div className="pointer-events-none absolute -top-12 -right-12 size-40 rounded-full opacity-40 blur-2xl" style={{ backgroundColor: c }} />
+          <div className="relative flex items-start justify-between gap-4">
+            <div>
+              <div className="text-xs text-night-muted">Harga all-in mulai</div>
+              <div className="num mt-1 text-3xl font-bold">{formatRupiah(pkg.price)}</div>
+            </div>
+            <Badge tone={status.tone} dot className="bg-white/10 text-night-ink ring-white/10">
+              {status.label}
+            </Badge>
+          </div>
+          <div className="relative mt-4">
+            <div className="mb-2 flex justify-between text-xs text-night-muted">
+              <span>Kursi terisi</span>
+              <span className="num font-semibold text-night-ink">
+                {pkg.bookedSeats}/{pkg.quota}
+              </span>
+            </div>
+            <Progress value={(pkg.bookedSeats / pkg.quota) * 100} color={c} track="bg-white/10" />
+          </div>
         </div>
 
-        {/* Room Price Options (Myriad Bold) */}
         {pkg.roomPrices && (
-          <div
-            className={`p-3.5 rounded-xl border space-y-2 text-xs ${
-              isDark ? 'bg-[#1a1918] border-[#2e2d2a]' : 'bg-[#faf9f6] border-[#eeece6]'
-            }`}
-          >
-            <div className="font-semibold">Opsi Kamar &amp; Harga per Orang (Myriad Bold):</div>
-            <div className="grid grid-cols-3 gap-2 text-center">
-              <div
-                className={`p-2 rounded-lg border ${
-                  isDark ? 'bg-[#22211f] border-[#33312e]' : 'bg-white border-[#dedbd2]'
-                }`}
-              >
-                <span className="block text-[10px] opacity-70">Quad (4 Orang)</span>
-                <span className="font-bold font-price-myriad text-sm">{formatRupiah(pkg.roomPrices.quad)}</span>
-              </div>
-              {pkg.roomPrices.triple && (
-                <div
-                  className={`p-2 rounded-lg border ${
-                    isDark ? 'bg-[#22211f] border-[#33312e]' : 'bg-white border-[#dedbd2]'
-                  }`}
-                >
-                  <span className="block text-[10px] opacity-70">Triple (3 Orang)</span>
-                  <span className="font-bold font-price-myriad text-sm">{formatRupiah(pkg.roomPrices.triple)}</span>
+          <div className="grid grid-cols-3 gap-3">
+            {(
+              [
+                ['Quad · 4 orang', pkg.roomPrices.quad],
+                ['Triple · 3 orang', pkg.roomPrices.triple],
+                ['Double · 2 orang', pkg.roomPrices.double],
+              ] as const
+            )
+              .filter(([, v]) => v)
+              .map(([l, v]) => (
+                <div key={l} className="rounded-2xl border border-line p-3.5">
+                  <div className="text-[11px] text-muted">{l}</div>
+                  <div className="num mt-1 text-sm font-bold text-ink">{formatRupiah(v!)}</div>
                 </div>
-              )}
-              {pkg.roomPrices.double && (
-                <div
-                  className={`p-2 rounded-lg border ${
-                    isDark ? 'bg-[#22211f] border-[#33312e]' : 'bg-white border-[#dedbd2]'
-                  }`}
-                >
-                  <span className="block text-[10px] opacity-70">Double (2 Orang)</span>
-                  <span className="font-bold font-price-myriad text-sm">{formatRupiah(pkg.roomPrices.double)}</span>
-                </div>
-              )}
-            </div>
+              ))}
           </div>
         )}
 
-        {/* Description */}
-        <div
-          className={`text-xs leading-relaxed ${
-            isDark ? 'text-[#a6a39b]' : 'text-[#66635d]'
-          }`}
-        >
-          {pkg.description}
-        </div>
+        <p className="text-[13px] leading-relaxed text-muted">{pkg.description}</p>
 
-        {/* Hotel & Airline Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-          <div
-            className={`p-3 rounded-xl border space-y-1 ${
-              isDark ? 'bg-[#1a1918] border-[#2d2c29]' : 'bg-[#faf9f6] border-[#eeece6]'
-            }`}
-          >
-            <div className="font-bold flex items-center gap-1.5">
-              <Building className="w-4 h-4" style={{ color: kc.accent }} />
-              <span>Akomodasi Hotel</span>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl bg-subtle p-4">
+            <div className="flex items-center gap-2 text-xs font-semibold text-ink">
+              <Building2 className="size-4" style={{ color: c }} /> Akomodasi
             </div>
-            <div className="opacity-80">Makkah: <strong>{pkg.makkahHotel}</strong></div>
-            <div className="opacity-80">Madinah: <strong>{pkg.madinahHotel}</strong></div>
-          </div>
-
-          <div
-            className={`p-3 rounded-xl border space-y-1 ${
-              isDark ? 'bg-[#1a1918] border-[#2d2c29]' : 'bg-[#faf9f6] border-[#eeece6]'
-            }`}
-          >
-            <div className="font-bold flex items-center gap-1.5">
-              <Plane className="w-4 h-4" style={{ color: kc.accent }} />
-              <span>Penerbangan &amp; Maskapai</span>
+            <div className="mt-2 space-y-1 text-xs text-muted">
+              <div>Makkah: {pkg.makkahHotel}</div>
+              <div>Madinah: {pkg.madinahHotel}</div>
             </div>
-            <div className="opacity-80">Maskapai: <strong>{pkg.airline}</strong></div>
-            <div className="opacity-80">Bagasi: <strong>2 x 23 Kg + 7 Kg Kabin</strong></div>
+          </div>
+          <div className="rounded-2xl bg-subtle p-4">
+            <div className="flex items-center gap-2 text-xs font-semibold text-ink">
+              <Plane className="size-4" style={{ color: c }} /> Penerbangan
+            </div>
+            <div className="mt-2 space-y-1 text-xs text-muted">
+              <div>{pkg.airline}</div>
+              <div>Berangkat: {pkg.departureDates.map((d) => formatDateIndo(d)).join(', ')}</div>
+            </div>
           </div>
         </div>
 
-        {/* Highlight Features */}
-        <div
-          className={`p-3 rounded-xl border text-xs space-y-2 ${
-            isDark ? 'bg-[#1a1918] border-[#2d2c29]' : 'bg-[#faf9f6] border-[#eeece6]'
-          }`}
-        >
-          <div className="font-bold">Fasilitas Termasuk:</div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-            {pkg.highlightFeatures.map((feat, idx) => (
-              <div key={idx} className="flex items-start gap-1.5 opacity-85">
-                <Check className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                <span>{feat}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div
-          className={`pt-3 border-t flex items-center justify-end gap-2 text-xs ${
-            isDark ? 'border-[#2d2c29]' : 'border-[#eeece6]'
-          }`}
-        >
-          <button
-            onClick={() => setSelectedPackageDetail(null)}
-            className={`px-3.5 py-2 rounded-lg font-medium transition-colors ${
-              isDark ? 'text-[#9c988f] hover:bg-[#282725]' : 'text-[#737069] hover:bg-[#f0ede6]'
-            }`}
-          >
-            Tutup
-          </button>
-          <button
-            onClick={() => {
-              setSelectedPackageDetail(null);
-              setShowAddJamaahModal(true);
-            }}
-            className="px-4 py-2 bg-[#f27244] hover:bg-[#e06336] text-white rounded-lg font-semibold shadow-xs transition-colors"
-          >
-            Daftarkan Jamaah
-          </button>
-        </div>
+        <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          {pkg.highlightFeatures.map((f) => (
+            <li key={f} className="flex gap-2 text-[13px] text-ink">
+              <Check className="mt-0.5 size-4 shrink-0 text-emerald-500" />
+              {f}
+            </li>
+          ))}
+        </ul>
       </div>
-    </div>
+    </Modal>
   );
 };

@@ -3,49 +3,40 @@ import { useApp } from '../../context/AppContext';
 import { COMPANY_INFO } from '../../data/mockData';
 import { formatDateIndo, exportToXlsx } from '../../utils/formatters';
 import { BrandLogo } from '../BrandLogo';
-import {
-  FileSpreadsheet,
-  Download,
-  Copy,
-  Check,
-  Plane,
-  Building,
-  Calendar,
-} from 'lucide-react';
+import { Badge, Button, Card, EmptyState, KeyValue, PageHeader, visaTone } from '../ui';
+import { Check, Copy, FileSpreadsheet, Plane, PlaneLanding, PlaneTakeoff } from 'lucide-react';
 
 export const ManifestGeneratorView: React.FC = () => {
-  const { departureGroups, jamaahList, packages, theme } = useApp();
+  const { departureGroups, jamaahList } = useApp();
+  const [groupId, setGroupId] = useState(departureGroups[0]?.id || '');
+  const [copied, setCopied] = useState(false);
 
-  const isDark = theme === 'dark';
-  const [selectedGroupId, setSelectedGroupId] = useState(
-    departureGroups[0]?.id || ''
-  );
-  const [copiedText, setCopiedText] = useState(false);
+  const group = departureGroups.find((g) => g.id === groupId) || departureGroups[0];
+  if (!group) {
+    return (
+      <Card>
+        <EmptyState icon={Plane} title="Belum ada kloter keberangkatan" />
+      </Card>
+    );
+  }
 
-  const currentGroup =
-    departureGroups.find((g) => g.id === selectedGroupId) || departureGroups[0];
+  const pax = jamaahList.filter((j) => j.packageId === group.packageId || j.departureDate === group.departureDate);
+  const issued = pax.filter((j) => j.visaStatus === 'Issued').length;
+  const withPassport = pax.filter((j) => j.passportNumber).length;
 
-  const manifestJamaah = jamaahList.filter(
-    (j) =>
-      j.packageId === currentGroup?.packageId ||
-      j.departureDate === currentGroup?.departureDate
-  );
-
-  const handleCopyManifest = () => {
-    let text = `MANIFEST PENERBANGAN RESMI\nPT MUDAHKEBAITULLAH TRAVEL INDONESIA\nPPIU Kemenhaj RI No. 9120008391024\n`;
-    text += `ROMBONGAN: ${currentGroup.code} (${currentGroup.name})\n`;
-    text += `MASKAPAI: ${currentGroup.airline} (${currentGroup.flightNumber})\n`;
-    text += `TANGGAL: ${currentGroup.departureDate} s/d ${currentGroup.returnDate}\n`;
-    text += `RUTE: ${currentGroup.departureAirport} - ${currentGroup.arrivalAirport}\n\n`;
+  const handleCopy = () => {
+    let text = `MANIFEST PENERBANGAN RESMI\n${COMPANY_INFO.legalName}\n${COMPANY_INFO.skIzin}\n`;
+    text += `ROMBONGAN: ${group.code} (${group.name})\n`;
+    text += `MASKAPAI: ${group.airline} (${group.flightNumber})\n`;
+    text += `TANGGAL: ${group.departureDate} s/d ${group.returnDate}\n`;
+    text += `RUTE: ${group.departureAirport} - ${group.arrivalAirport}\n\n`;
     text += `NO | NAMA LENGKAP | NO PASPOR | TGL LAHIR | EXP PASPOR | NO HP / WA\n`;
-
-    manifestJamaah.forEach((j, idx) => {
-      text += `${idx + 1}. | ${j.fullName} | ${j.passportNumber || '-'} | ${j.birthDate || '-'} | ${j.passportExpiryDate || '-'} | ${j.phoneWhatsapp}\n`;
+    pax.forEach((j, i) => {
+      text += `${i + 1}. | ${j.fullName} | ${j.passportNumber || '-'} | ${j.birthDate || '-'} | ${j.passportExpiryDate || '-'} | ${j.phoneWhatsapp}\n`;
     });
-
     navigator.clipboard.writeText(text);
-    setCopiedText(true);
-    setTimeout(() => setCopiedText(false), 2500);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   const handleExportXlsx = () => {
@@ -64,9 +55,8 @@ export const ManifestGeneratorView: React.FC = () => {
       'STATUS VISA',
       'PAKET UMROH',
     ];
-
-    const rows = manifestJamaah.map((j, index) => [
-      index + 1,
+    const rows = pax.map((j, i) => [
+      i + 1,
       j.title || 'Mr',
       j.fullName,
       j.gender || 'L',
@@ -78,250 +68,145 @@ export const ManifestGeneratorView: React.FC = () => {
       j.phoneWhatsapp,
       j.city || 'Yogyakarta',
       j.visaStatus,
-      currentGroup.packageName,
+      group.packageName,
     ]);
-
-    exportToXlsx(`MANIFEST_${currentGroup.code}_${currentGroup.departureDate}`, headers, rows);
+    exportToXlsx(`MANIFEST_${group.code}_${group.departureDate}`, headers, rows);
   };
 
   return (
-    <div className="space-y-6 font-sans">
-      {/* Top Header */}
-      <div
-        className={`p-5 rounded-xl border shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors ${
-          isDark
-            ? 'bg-[#22211f] border-[#33312e] text-[#f4f3ef]'
-            : 'bg-white border-[#e8e5dc] text-[#23211e]'
-        }`}
-      >
-        <div>
-          <h2 className="text-base font-bold">
-            Manivest Penerbangan &amp; Kloter
-          </h2>
-          <p
-            className={`text-xs mt-0.5 ${
-              isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-            }`}
-          >
-            Format resmi standar maskapai penerbangan dan Sistem Kemenhaj RI.
-          </p>
+    <div className="space-y-6">
+      <PageHeader
+        title="Manifest penerbangan"
+        description="Daftar penumpang per kloter dalam format standar maskapai & Kemenhaj RI."
+        actions={
+          <>
+            <select className="input w-auto max-w-[280px]" value={group.id} onChange={(e) => setGroupId(e.target.value)} aria-label="Pilih kloter">
+              {departureGroups.map((g) => (
+                <option key={g.id} value={g.id}>
+                  {g.code} — {g.name}
+                </option>
+              ))}
+            </select>
+            <Button icon={copied ? Check : Copy} onClick={handleCopy}>
+              {copied ? 'Tersalin' : 'Salin teks'}
+            </Button>
+            <Button variant="primary" icon={FileSpreadsheet} onClick={handleExportXlsx}>
+              Export Excel
+            </Button>
+          </>
+        }
+      />
+
+      {/* Kartu penerbangan (boarding pass) */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
+        <div className="flex flex-col rounded-[20px] bg-night p-6 text-night-ink xl:col-span-8">
+          <div className="flex items-center justify-between">
+            <span className="rounded-full bg-white/10 px-2.5 py-0.5 font-mono text-[11px] font-semibold">{group.code}</span>
+            <span className="text-xs text-night-muted">
+              {group.airline} · <span className="font-mono">{group.flightNumber}</span>
+            </span>
+          </div>
+          <div className="my-8 grid grid-cols-[1fr_auto_1fr] items-center gap-4">
+            <div>
+              <PlaneTakeoff className="size-5 text-accent" />
+              <div className="mt-2 text-lg leading-tight font-bold">{group.departureAirport}</div>
+              <div className="mt-1 text-xs text-night-muted">{formatDateIndo(group.departureDate)}</div>
+            </div>
+            <div className="flex items-center gap-2 text-night-muted">
+              <span className="hidden h-px w-16 border-t border-dashed border-white/30 sm:block" />
+              <Plane className="size-5 text-night-ink" />
+              <span className="hidden h-px w-16 border-t border-dashed border-white/30 sm:block" />
+            </div>
+            <div className="text-right">
+              <PlaneLanding className="ml-auto size-5 text-accent" />
+              <div className="mt-2 text-lg leading-tight font-bold">{group.arrivalAirport}</div>
+              <div className="mt-1 text-xs text-night-muted">Pulang {formatDateIndo(group.returnDate)}</div>
+            </div>
+          </div>
+          <div className="mt-auto grid grid-cols-2 gap-4 border-t border-white/10 pt-5 sm:grid-cols-3">
+            <div>
+              <div className="text-[11px] text-night-muted uppercase">Program</div>
+              <div className="mt-1 truncate text-[13px] font-semibold">{group.packageName}</div>
+            </div>
+            <div>
+              <div className="text-[11px] text-night-muted uppercase">Tour leader</div>
+              <div className="mt-1 truncate text-[13px] font-semibold">{group.tourLeader}</div>
+            </div>
+            <div>
+              <div className="text-[11px] text-night-muted uppercase">Muthawif</div>
+              <div className="mt-1 truncate text-[13px] font-semibold">{group.muthawif}</div>
+            </div>
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Kloter selector */}
-          <select
-            value={selectedGroupId}
-            onChange={(e) => setSelectedGroupId(e.target.value)}
-            className={`px-3 py-1.5 text-xs rounded-lg border font-medium focus:outline-none focus:ring-1 focus:ring-[#f27244] ${
-              isDark
-                ? 'bg-[#1a1918] border-[#33312e] text-[#f4f3ef]'
-                : 'bg-[#faf9f6] border-[#dedbd2] text-[#23211e]'
-            }`}
-          >
-            {departureGroups.map((g) => (
-              <option key={g.id} value={g.id}>
-                {g.code} - {g.name}
-              </option>
-            ))}
-          </select>
-
-          <button
-            onClick={handleCopyManifest}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-              isDark
-                ? 'bg-[#2a2926] hover:bg-[#343330] text-[#d6d3cb] border-[#383633]'
-                : 'bg-[#f7f6f2] hover:bg-[#eeebe3] text-[#4a4740] border-[#dedbd2]'
-            }`}
-          >
-            {copiedText ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
-                <span>Tersalin!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5" />
-                <span>Salin Teks</span>
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={handleExportXlsx}
-            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#f27244] hover:bg-[#e06336] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors"
-          >
-            <FileSpreadsheet className="w-3.5 h-3.5" />
-            <span>Export Excel (.xlsx)</span>
-          </button>
+        <div className="grid grid-cols-3 gap-4 xl:col-span-4 xl:grid-cols-1">
+          {[
+            { label: 'Penumpang', value: `${pax.length}/${group.totalQuota}` },
+            { label: 'Visa issued', value: `${issued}/${pax.length}` },
+            { label: 'Paspor terdata', value: `${withPassport}/${pax.length}` },
+          ].map((s) => (
+            <Card key={s.label} className="p-5">
+              <div className="text-[13px] text-muted">{s.label}</div>
+              <div className="num mt-2 text-2xl font-bold text-ink">{s.value}</div>
+            </Card>
+          ))}
         </div>
       </div>
 
-      {/* Manifest Overview Box */}
-      <div
-        className={`rounded-xl border shadow-xs p-5 space-y-4 transition-colors ${
-          isDark
-            ? 'bg-[#22211f] border-[#33312e]'
-            : 'bg-white border-[#e8e5dc]'
-        }`}
-      >
-        {/* Brand Header */}
-        <div className="flex items-center justify-between pb-3 border-b"
-          style={{ borderColor: isDark ? '#2d2c29' : '#eeece6' }}
-        >
+      {/* Tabel manifest */}
+      <Card className="overflow-hidden">
+        <div className="flex flex-wrap items-center justify-between gap-4 p-5">
           <div className="flex items-center gap-3">
-            <BrandLogo className="h-8" showUploadPrompt={false} />
+            <BrandLogo className="h-9" withText={false} />
             <div>
-              <div className="font-extrabold text-xs">
-                {COMPANY_INFO.legalName}
-              </div>
-              <div
-                className={`text-[10px] ${
-                  isDark ? 'text-[#9c988f]' : 'text-[#737069]'
-                }`}
-              >
-                PPIU Kemenhaj RI: {COMPANY_INFO.skIzin} · Yogyakarta
-              </div>
+              <div className="text-[13px] font-bold text-ink">{COMPANY_INFO.legalName}</div>
+              <div className="text-[11px] text-muted">{COMPANY_INFO.skIzin}</div>
             </div>
           </div>
-          <span className="font-mono text-xs font-bold text-[#f27244]">
-            {currentGroup.code}
-          </span>
-        </div>
-
-        {/* Info Grid */}
-        <div
-          className={`grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border text-xs ${
-            isDark
-              ? 'bg-[#1a1918] border-[#2d2c29] text-[#d6d3cb]'
-              : 'bg-[#faf9f6] border-[#eeece6] text-[#3d3a35]'
-          }`}
-        >
-          <div>
-            <span
-              className={`text-[10px] font-semibold uppercase block ${
-                isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-              }`}
-            >
-              Program
-            </span>
-            <span className="font-bold">{currentGroup.packageName}</span>
-          </div>
-          <div>
-            <span
-              className={`text-[10px] font-semibold uppercase block ${
-                isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-              }`}
-            >
-              Penerbangan
-            </span>
-            <span className="font-bold">{currentGroup.airline} ({currentGroup.flightNumber})</span>
-          </div>
-          <div>
-            <span
-              className={`text-[10px] font-semibold uppercase block ${
-                isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-              }`}
-            >
-              Jadwal
-            </span>
-            <span className="font-medium">{currentGroup.departureDate} s/d {currentGroup.returnDate}</span>
-          </div>
-          <div>
-            <span
-              className={`text-[10px] font-semibold uppercase block ${
-                isDark ? 'text-[#737069]' : 'text-[#8c8982]'
-              }`}
-            >
-              Tour Leader
-            </span>
-            <span className="font-medium">{currentGroup.tourLeader}</span>
+          <div className="flex gap-6">
+            <KeyValue label="Rombongan">{group.code}</KeyValue>
+            <KeyValue label="Status">{group.status}</KeyValue>
           </div>
         </div>
-
-        {/* Manifest Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead
-              className={`border-b font-semibold ${
-                isDark
-                  ? 'bg-[#1e1d1b] border-[#2d2c29] text-[#9c988f]'
-                  : 'bg-[#faf9f6] border-[#eeece6] text-[#737069]'
-              }`}
-            >
+        <div className="overflow-x-auto border-t border-line">
+          <table className="table min-w-[860px]">
+            <thead>
               <tr>
-                <th className="py-2 px-3">No</th>
-                <th className="py-2 px-4">Nama Lengkap (Sesuai Paspor)</th>
-                <th className="py-2 px-3">No. Paspor</th>
-                <th className="py-2 px-3">Tgl Lahir</th>
-                <th className="py-2 px-3">Exp Paspor</th>
-                <th className="py-2 px-3">Status Visa</th>
-                <th className="py-2 px-3">Kontak WA</th>
+                <th className="w-12">No</th>
+                <th>Nama (sesuai paspor)</th>
+                <th>No. paspor</th>
+                <th>Tgl lahir</th>
+                <th>Exp paspor</th>
+                <th>Visa</th>
+                <th>WhatsApp</th>
               </tr>
             </thead>
-            <tbody
-              className={`divide-y ${
-                isDark
-                  ? 'divide-[#2d2c29] text-[#d6d3cb]'
-                  : 'divide-[#f0ede6] text-[#33302b]'
-              }`}
-            >
-              {manifestJamaah.length === 0 ? (
+            <tbody>
+              {pax.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={7}
-                    className={`py-8 text-center text-xs ${
-                      isDark ? 'text-[#737069]' : 'text-[#9c988f]'
-                    }`}
-                  >
-                    Belum ada jamaah yang dialokasikan ke kloter penerbangan ini.
+                  <td colSpan={7}>
+                    <EmptyState icon={Plane} title="Belum ada jamaah di kloter ini" />
                   </td>
                 </tr>
               ) : (
-                manifestJamaah.map((j, idx) => (
-                  <tr
-                    key={j.id}
-                    className={`transition-colors ${
-                      isDark ? 'hover:bg-[#282724]' : 'hover:bg-[#fbfaf7]'
-                    }`}
-                  >
-                    <td className="py-2.5 px-3 font-mono opacity-70">
-                      {idx + 1}
+                pax.map((j, i) => (
+                  <tr key={j.id}>
+                    <td className="num text-muted">{i + 1}</td>
+                    <td className="font-semibold text-ink">{j.fullName}</td>
+                    <td className="font-mono text-xs">{j.passportNumber || <span className="text-faint italic">belum ada</span>}</td>
+                    <td className="text-muted">{j.birthDate || '-'}</td>
+                    <td className="font-mono text-xs text-muted">{j.passportExpiryDate || '-'}</td>
+                    <td>
+                      <Badge tone={visaTone(j.visaStatus)}>{j.visaStatus}</Badge>
                     </td>
-                    <td className="py-2.5 px-4 font-bold">
-                      {j.fullName}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono font-semibold">
-                      {j.passportNumber || <span className="opacity-50 italic">Belum ada</span>}
-                    </td>
-                    <td className="py-2.5 px-3 opacity-80">
-                      {j.birthDate || '-'}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono opacity-80">
-                      {j.passportExpiryDate || '-'}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      <span
-                        className={`text-[10px] font-semibold px-2 py-0.5 rounded font-mono ${
-                          j.visaStatus === 'Issued'
-                            ? 'bg-emerald-500/15 text-emerald-500'
-                            : j.visaStatus === 'Proses Enjaz'
-                            ? 'bg-blue-500/15 text-blue-500'
-                            : 'bg-amber-500/15 text-amber-500'
-                        }`}
-                      >
-                        {j.visaStatus}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 font-mono text-[#f27244]">
-                      {j.phoneWhatsapp}
-                    </td>
+                    <td className="font-mono text-xs text-muted">{j.phoneWhatsapp}</td>
                   </tr>
                 ))
               )}
             </tbody>
           </table>
         </div>
-      </div>
+      </Card>
     </div>
   );
 };
