@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Ringkasan Perang Khandaq</title>
+<style>
+:root{--ink:#080706;--gold:#C9A84C;--cream:#F5EDD3;--muted:#8A7D5A;}
+html,body{margin:0;background:var(--ink);color:var(--cream);font-family:Georgia,'DejaVu Serif',serif;}
+#wrap{max-width:1280px;margin:0 auto;padding:16px;box-sizing:border-box;}
+canvas{width:100%;height:auto;display:block;border:1px solid rgba(201,168,76,.25);border-radius:8px;background:#0f0e0b;}
+#ctrl{display:flex;gap:10px;align-items:center;margin-top:10px;}
+button{background:transparent;border:1px solid var(--gold);color:var(--gold);padding:6px 14px;border-radius:5px;font-family:inherit;cursor:pointer;}
+input[type=range]{flex:1;accent-color:var(--gold);}
+#tm{color:var(--muted);font-size:13px;min-width:90px;text-align:right;}
+body.capture #ctrl{display:none;} body.capture #wrap{padding:0;} body.capture canvas{border:0;border-radius:0;}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="cv" width="1280" height="720"></canvas>
+  <div id="ctrl"><button id="pp">▶ Putar</button><input id="sk" type="range" min="0" max="1000" value="0"/><span id="tm">0:00</span></div>
+</div>
+<script>
+const W=1280,H=720,cv=document.getElementById('cv'),c=cv.getContext('2d');
+const C={ink:'#080706',deep:'#0f0e0b',panel:'#1e1b14',gold:'#C9A84C',goldB:'#E8C96A',goldP:'#F0DCA0',goldD:'#6B5620',
+  cream:'#F5EDD3',maroon:'#6B1F1F',maroonL:'#B04040',olive:'#3A4828',oliveL:'#7A9A50',teal:'#2A6058',muted:'#8A7D5A',sand:'#2a2418',lava:'#14110d'};
+const SERIF="Georgia,'DejaVu Serif',serif", SANS="'DejaVu Sans',Arial,sans-serif";
+
+// ---------- helpers ----------
+const clamp=(x,a=0,b=1)=>Math.max(a,Math.min(b,x));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const ease=t=>{t=clamp(t);return t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;};
+const eOut=t=>1-Math.pow(1-clamp(t),3);
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+function rnd(i){const x=Math.sin(i*127.1+311.7)*43758.5453;return x-Math.floor(x);}
+// fade in at a..a+d, out at b-d..b
+function vis(t,a,b,d=.6){return Math.min(prog(t,a,a+d),1-prog(t,b-d,b));}
+
+function txt(s,x,y,{size=28,font=SERIF,color=C.cream,align='left',weight='normal',alpha=1,style='normal',ls=0}={}){
+  c.save();c.globalAlpha*=alpha;c.font=`${style} ${weight} ${size}px ${font}`;c.fillStyle=color;c.textAlign=align;c.textBaseline='alphabetic';
+  if(ls&&'letterSpacing' in c)c.letterSpacing=ls+'px';
+  c.fillText(s,x,y);c.restore();
+}
+function wrap(s,maxW,size,font=SERIF,weight='normal'){
+  c.save();c.font=`${weight} ${size}px ${font}`;const words=s.split(' ');const lines=[];let cur='';
+  for(const w of words){const tst=cur?cur+' '+w:w;if(c.measureText(tst).width>maxW&&cur){lines.push(cur);cur=w;}else cur=tst;}
+  if(cur)lines.push(cur);c.restore();return lines;
+}
+// typewriter-ish reveal by characters
+function para(s,x,y,maxW,{size=24,lh=1.45,color=C.cream,alpha=1,reveal=1,align='left',weight='normal',font=SERIF}={}){
+  const lines=wrap(s,maxW,size,font,weight);let total=s.length,shown=Math.floor(total*clamp(reveal)),n=0;
+  lines.forEach((l,i)=>{const take=clamp(shown-n,0,l.length);n+=l.length+1;if(take<=0)return;
+    txt(l.slice(0,take),x,y+i*size*lh,{size,color,alpha,align,weight,font});});
+  return lines.length*size*lh;
+}
+function rrect(x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function star8(x,y,r,col,a=1,rot=0){c.save();c.globalAlpha*=a;c.translate(x,y);c.rotate(rot);c.strokeStyle=col;c.lineWidth=1.5;
+  for(let k=0;k<2;k++){c.save();c.rotate(k*Math.PI/4);c.strokeRect(-r*.7,-r*.7,r*1.4,r*1.4);c.restore();}
+  c.beginPath();c.arc(0,0,r*.32,0,7);c.stroke();c.restore();}
+function divider(x,y,w,a=1){c.save();c.globalAlpha*=a;c.strokeStyle=C.gold;c.lineWidth=1;
+  c.beginPath();c.moveTo(x-w/2,y);c.lineTo(x-14,y);c.moveTo(x+14,y);c.lineTo(x+w/2,y);c.stroke();
+  c.translate(x,y);c.rotate(Math.PI/4);c.fillStyle=C.gold;c.fillRect(-5,-5,10,10);c.restore();}
+
+// ---------- background ----------
+function background(t){
+  const g=c.createRadialGradient(W*.2,H*.2,0,W*.2,H*.2,W*.8);g.addColorStop(0,'#1a160f');g.addColorStop(1,C.ink);
+  c.fillStyle=g;c.fillRect(0,0,W,H);
+  const g2=c.createRadialGradient(W*.9,H*.9,0,W*.9,H*.9,W*.5);g2.addColorStop(0,'rgba(107,31,31,.16)');g2.addColorStop(1,'rgba(107,31,31,0)');
+  c.fillStyle=g2;c.fillRect(0,0,W,H);
+  c.save();c.globalAlpha=.035;c.strokeStyle=C.gold;c.lineWidth=1;
+  for(let x=0;x<W;x+=72){c.beginPath();c.moveTo(x,0);c.lineTo(x,H);c.stroke();}
+  for(let y=0;y<H;y+=72){c.beginPath();c.moveTo(0,y);c.lineTo(W,y);c.stroke();}
+  c.restore();
+  // drifting dust
+  c.save();for(let i=0;i<40;i++){const x=(rnd(i)*W+t*8*(0.3+rnd(i+9)))%W,y=(rnd(i+50)*H+Math.sin(t*.3+i)*10);
+    c.globalAlpha=.08+.1*rnd(i+3);c.fillStyle=C.goldP;c.beginPath();c.arc(x,y,1+rnd(i+7)*1.5,0,7);c.fill();}c.restore();
+}
+function frame(){c.save();c.strokeStyle='rgba(201,168,76,.28)';c.lineWidth=1;c.strokeRect(18,18,W-36,H-36);
+  c.strokeStyle='rgba(201,168,76,.10)';c.strokeRect(26,26,W-52,H-52);
+  [[18,18],[W-18,18],[18,H-18],[W-18,H-18]].forEach(([x,y])=>{c.save();c.translate(x,y);c.rotate(Math.PI/4);c.fillStyle=C.gold;c.fillRect(-4,-4,8,8);c.restore();});
+  c.restore();}
+
+// chapter label + progress
+function chapter(t,a,b,num,title){
+  const v=vis(t,a,b,.5);if(v<=0)return;
+  txt(`BAGIAN ${num}`,60,72,{size:13,font:SANS,color:C.gold,weight:'bold',alpha:v,ls:3});
+  txt(title,60,104,{size:30,color:C.cream,alpha:v});
+  c.save();c.globalAlpha=v;c.fillStyle=C.gold;c.fillRect(60,118,lerp(0,60,eOut(prog(t,a,a+1))),2);c.restore();
+}
+// caption box (lower third)
+function caption(t,a,b,s,{y=600,w=1060}={}){
+  const v=vis(t,a,b,.5);if(v<=0)return;
+  const lines=wrap(s,w-60,22);const h=lines.length*22*1.45+30;const x=(W-w)/2,yy=y-h/2+10;
+  c.save();c.globalAlpha=v*.88;rrect(x,yy,w,h,10);c.fillStyle='rgba(15,14,11,.92)';c.fill();
+  c.strokeStyle='rgba(201,168,76,.35)';c.lineWidth=1;c.stroke();c.fillStyle=C.gold;c.fillRect(x,yy+12,3,h-24);c.restore();
+  para(s,x+30,yy+36,w-60,{size:22,alpha:v,reveal:prog(t,a+.2,a+.2+s.length/70)});
+}
+
+// ---------- map ----------
+// schematic map of Madinah, north up
+const MAP={ox:0,oy:0};
+const P={madinah:[640,440],uhud:[620,150],sala:[600,330],trW:[425,318],trE:[860,300],
+  quraisy:[470,215],ghathafan:[790,190],quraizhah:[880,555],harrahW:[300,420],harrahE:[990,420]};
+const trenchPts=[[430,330],[470,300],[530,288],[600,282],[670,282],[740,286],[800,292],[850,305]];
+function polyLen(p){let L=0;for(let i=1;i<p.length;i++)L+=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]);return L;}
+function drawPartial(p,f){const L=polyLen(p)*f;let acc=0;c.beginPath();c.moveTo(...p[0]);
+  for(let i=1;i<p.length;i++){const d=Math.hypot(p[i][0]-p[i-1][0],p[i][1]-p[i-1][1]);
+    if(acc+d<=L){c.lineTo(...p[i]);acc+=d;}else{const k=(L-acc)/d;c.lineTo(lerp(p[i-1][0],p[i][0],k),lerp(p[i-1][1],p[i][1],k));break;}}
+  c.stroke();}
+function lavaField(cx,cy,rx,ry,seed,a){
+  c.save();c.globalAlpha*=a;c.beginPath();
+  for(let i=0;i<=40;i++){const an=i/40*Math.PI*2,r=1+.12*Math.sin(an*5+seed)+.06*Math.sin(an*11+seed*2);
+    c.lineTo(cx+Math.cos(an)*rx*r,cy+Math.sin(an)*ry*r);}
+  c.closePath();c.fillStyle='#211a12';c.fill();c.strokeStyle='rgba(176,64,64,.35)';c.setLineDash([3,5]);c.stroke();c.setLineDash([]);
+  c.clip();c.fillStyle='rgba(0,0,0,.45)';
+  for(let i=0;i<120;i++){c.beginPath();c.arc(cx+(rnd(i+seed)-.5)*rx*2,cy+(rnd(i*3+seed)-.5)*ry*2,1.5+rnd(i*7)*3,0,7);c.fill();}
+  c.restore();}
+function mountain(x,y,w,h,label,a,col=C.goldD){
+  c.save();c.globalAlpha*=a;c.fillStyle=col;c.strokeStyle=C.gold;c.lineWidth=1.2;
+  c.beginPath();c.moveTo(x-w/2,y);c.lineTo(x-w*.2,y-h*.8);c.lineTo(x,y-h*.55);c.lineTo(x+w*.18,y-h);c.lineTo(x+w/2,y);c.closePath();c.fill();c.stroke();
+  c.restore();if(label)txt(label,x,y+20,{size:15,align:'center',color:C.goldP,alpha:a,font:SANS});}
+function city(a,label=true){
+  const [x,y]=P.madinah;c.save();c.globalAlpha*=a;
+  for(let i=0;i<26;i++){const bx=x-70+rnd(i)*140,by=y-36+rnd(i+30)*72,s=8+rnd(i+60)*10;
+    c.fillStyle=i%3?'#3a3222':'#4a3f2a';c.fillRect(bx,by,s,s*.8);}
+  // masjid
+  c.fillStyle=C.gold;c.fillRect(x-9,y-8,18,14);c.beginPath();c.arc(x,y-8,9,Math.PI,0);c.fill();
+  c.restore();if(label)txt('MADINAH',x,y+64,{size:16,align:'center',color:C.goldB,alpha:a,font:SANS,weight:'bold',ls:2});}
+function palms(a){c.save();c.globalAlpha*=a;
+  for(let i=0;i<34;i++){const x=470+rnd(i+200)*360,y=520+rnd(i+300)*90;c.fillStyle=C.olive;c.beginPath();c.arc(x,y,5+rnd(i)*4,0,7);c.fill();}
+  c.restore();txt('kebun kurma & benteng',640,640,{size:13,align:'center',color:C.oliveL,alpha:a,font:SANS});}
+function compass(a){c.save();c.globalAlpha*=a;c.translate(1170,170);c.strokeStyle=C.gold;c.fillStyle=C.gold;
+  c.beginPath();c.arc(0,0,26,0,7);c.stroke();c.beginPath();c.moveTo(0,-22);c.lineTo(6,0);c.lineTo(0,-4);c.lineTo(-6,0);c.closePath();c.fill();
+  c.restore();txt('U',1170,135,{size:14,align:'center',color:C.gold,alpha:a,font:SANS,weight:'bold'});}
+function baseMap(t,a,sala=true){
+  if(a<=0)return;
+  c.save();c.globalAlpha*=a;rrect(230,130,880,530,14);c.fillStyle='rgba(42,36,24,.55)';c.fill();c.strokeStyle='rgba(201,168,76,.2)';c.stroke();c.restore();
+  lavaField(P.harrahW[0],P.harrahW[1],95,210,1,a);lavaField(P.harrahE[0],P.harrahE[1],95,210,4,a);
+  txt('Harrah al-Wabrah',300,190,{size:13,align:'center',color:'#c98a7a',alpha:a,font:SANS});
+  txt('Harrah Waqim',990,190,{size:13,align:'center',color:'#c98a7a',alpha:a,font:SANS});
+  txt('(medan batu lava)',300,206,{size:11,align:'center',color:C.muted,alpha:a,font:SANS});
+  txt('(medan batu lava)',990,206,{size:11,align:'center',color:C.muted,alpha:a,font:SANS});
+  mountain(P.uhud[0],P.uhud[1],170,48,'Gunung Uhud',a);
+  mountain(P.sala[0],P.sala[1]+20,70,28,'',a,'#4a3c18');
+  if(sala)txt('Jabal Sala\'',P.sala[0],P.sala[1]+38,{size:12,align:'center',color:C.goldP,alpha:a,font:SANS});
+  city(a);palms(a);compass(a);
+}
+function trench(f,a,glow=0){if(f<=0||a<=0)return;c.save();c.globalAlpha*=a;c.lineCap='round';c.lineJoin='round';
+  if(glow>0){c.strokeStyle=`rgba(232,201,106,${.25*glow})`;c.lineWidth=18;drawPartial(trenchPts,f);}
+  c.strokeStyle='#0a0806';c.lineWidth=9;drawPartial(trenchPts,f);
+  c.strokeStyle=C.goldB;c.lineWidth=2;c.setLineDash([8,6]);drawPartial(trenchPts,f);c.setLineDash([]);c.restore();}
+function troop(x,y,col,r=4,a=1){c.save();c.globalAlpha*=a;c.fillStyle=col;c.beginPath();c.moveTo(x,y-r*1.6);c.lineTo(x+r,y+r);c.lineTo(x-r,y+r);c.closePath();c.fill();c.restore();}
+function tent(x,y,col,a=1,tilt=0,blown=0){c.save();c.globalAlpha*=a*(1-blown);c.translate(x+blown*40,y-blown*20);c.rotate(tilt+blown*1.4);
+  c.fillStyle=col;c.beginPath();c.moveTo(-8,5);c.lineTo(0,-8);c.lineTo(8,5);c.closePath();c.fill();c.restore();}
+function label(s,x,y,col,a,sub){
+  if(a<=0)return;c.save();c.globalAlpha*=a;c.font=`bold 14px ${SANS}`;const w=Math.max(c.measureText(s).width,sub?(c.font=`12px ${SANS}`,c.measureText(sub).width):0)+20;
+  rrect(x-w/2,y-18,w,sub?40:26,5);c.fillStyle='rgba(8,7,6,.85)';c.fill();c.strokeStyle=col;c.stroke();c.restore();
+  txt(s,x,y,{size:14,align:'center',color:col,alpha:a,font:SANS,weight:'bold'});
+  if(sub)txt(sub,x,y+16,{size:12,align:'center',color:C.cream,alpha:a*.8,font:SANS});}
+function arrow(x1,y1,x2,y2,col,f,a=1,w=4){if(f<=0)return;const x=lerp(x1,x2,f),y=lerp(y1,y2,f);
+  c.save();c.globalAlpha*=a;c.strokeStyle=col;c.fillStyle=col;c.lineWidth=w;c.lineCap='round';
+  c.beginPath();c.moveTo(x1,y1);c.lineTo(x,y);c.stroke();const an=Math.atan2(y2-y1,x2-x1);
+  c.translate(x,y);c.rotate(an);c.beginPath();c.moveTo(6,0);c.lineTo(-10,-9);c.lineTo(-10,9);c.closePath();c.fill();c.restore();}
+
+// ---------- scenes ----------
+const T=[ // start times
+  0,   // 0 title
+  8,   // 1 latar
+  20,  // 2 kekuatan
+  31,  // 3 musyawarah / parit
+  45,  // 4 penggalian
+  56,  // 5 pengepungan
+  70,  // 6 quraizhah
+  80,  // 7 nuaim
+  90,  // 8 angin
+  102, // 9 hasil
+  113, // 10 pelajaran
+  126, // 11 penutup
+  133];
+const DUR=T[T.length-1];
+
+function sTitle(t){const a=T[0],b=T[1],v=vis(t,a,b,.8);if(v<=0)return;
+  const cx=W/2;
+  star8(cx,180,48,C.gold,v*eOut(prog(t,.2,1.4)),t*.15);
+  txt('غزوة الخندق',cx,300,{size:46,align:'center',color:C.goldB,alpha:v*eOut(prog(t,.6,1.6)),font:SANS});
+  txt('PERANG KHANDAQ',cx,380,{size:72,align:'center',color:C.cream,alpha:v*eOut(prog(t,1,2.2)),weight:'bold',ls:6});
+  divider(cx,415,lerp(0,420,eOut(prog(t,1.6,2.8))),v);
+  txt('Perang Ahzab · Pasukan Sekutu',cx,460,{size:26,align:'center',color:C.gold,alpha:v*eOut(prog(t,2.2,3.2)),style:'italic'});
+  txt('SYAWAL 5 H  ·  627 M  ·  MADINAH',cx,520,{size:16,align:'center',color:C.muted,alpha:v*eOut(prog(t,2.8,3.8)),font:SANS,ls:4});
+  txt('Ringkasan Sirah Nabawiyah',cx,640,{size:15,align:'center',color:C.muted,alpha:v*eOut(prog(t,3.4,4.4)),style:'italic'});
+}
+function sLatar(t){const a=T[1],b=T[2];if(t<a||t>b)return;
+  chapter(t,a,b,1,'Latar Belakang');
+  const v=vis(t,a,b,.6);
+  // three actors converging
+  const nodes=[{n:'Bani Nadhir',s:'Huyay bin Akhtab',x:640,y:250,col:C.maroonL,d:.6},
+               {n:'Quraisy (Makkah)',s:'Abu Sufyan',x:360,y:420,col:C.goldB,d:2.2},
+               {n:'Ghathafan & kabilah Najd',s:'Uyainah bin Hishn',x:920,y:420,col:C.goldB,d:3.6}];
+  nodes.forEach((nd,i)=>{const av=v*eOut(prog(t,a+nd.d,a+nd.d+.8));if(i>0)arrow(640,272,nd.x+(i==1?60:-60),nd.y-30,'rgba(176,64,64,.8)',ease(prog(t,a+nd.d-.4,a+nd.d+.6)),v,2);
+    label(nd.n,nd.x,nd.y,nd.col,av,nd.s);});
+  const cv2=v*eOut(prog(t,a+5,a+6));
+  label('AL-AHZAB  —  Koalisi melawan Madinah',640,505,C.maroonL,cv2);
+  caption(t,a+.4,b,'Setelah diusir dari Madinah karena berkhianat, para pemimpin Yahudi Bani Nadhir mendatangi Quraisy di Makkah dan kabilah Ghathafan di Najd. Mereka menghasut untuk bersekutu dan menyerang Madinah sekaligus — menuntaskan Islam untuk selamanya.');
+}
+function sKekuatan(t){const a=T[2],b=T[3];if(t<a||t>b)return;
+  chapter(t,a,b,2,'Perbandingan Kekuatan');const v=vis(t,a,b,.6);
+  // dots grid: each dot = 100 soldiers
+  const grid=(n,x0,y0,cols,col,start)=>{for(let i=0;i<n;i++){const dv=prog(t,start+i*.025,start+i*.025+.3);if(dv<=0)continue;
+      troop(x0+(i%cols)*22,y0+Math.floor(i/cols)*24,col,5,v*dv);}};
+  txt('Pasukan Ahzab',140,200,{size:24,color:C.maroonL,alpha:v,weight:'bold'});
+  grid(100,150,240,20,C.maroonL,a+1);
+  const n1=Math.round(10000*ease(prog(t,a+1,a+3.6)));
+  txt(n1.toLocaleString('id-ID'),140,520,{size:56,color:C.cream,alpha:v,weight:'bold'});
+  txt('±10.000 prajurit',140,548,{size:16,color:C.muted,alpha:v,font:SANS});
+  txt('Kaum Muslimin',780,200,{size:24,color:C.goldB,alpha:v,weight:'bold'});
+  grid(30,790,240,15,C.goldB,a+4);
+  const n2=Math.round(3000*ease(prog(t,a+4,a+5.2)));
+  txt(n2.toLocaleString('id-ID'),780,520,{size:56,color:C.cream,alpha:v*prog(t,a+4,a+4.3),weight:'bold'});
+  txt('±3.000 prajurit',780,548,{size:16,color:C.muted,alpha:v*prog(t,a+4,a+4.3),font:SANS});
+  txt('1 ▲ = 100 orang',W/2,232,{size:13,color:C.muted,alpha:v,font:SANS,align:'center'});
+  caption(t,a+5.4,b,'Sekitar 10.000 pasukan sekutu bergerak menuju Madinah — jumlah terbesar yang pernah dihadapi kaum Muslimin. Sementara Madinah hanya memiliki sekitar 3.000 prajurit.',{y:635});
+}
+function sParit(t){const a=T[3],b=T[4];if(t<a||t>b)return;
+  const v=vis(t,a,b,.7);baseMap(t,v);chapter(t,a,b,3,'Musyawarah & Strategi Parit');
+  // highlight open north side
+  const hv=v*vis(t,a+3,a+7,.5);
+  c.save();c.globalAlpha=hv*(.5+.3*Math.sin(t*5));c.strokeStyle=C.maroonL;c.lineWidth=3;c.setLineDash([10,8]);
+  c.beginPath();c.moveTo(420,330);c.quadraticCurveTo(640,250,860,305);c.stroke();c.restore();
+  label('Utara: terbuka & datar',640,250,C.maroonL,hv);
+  // salman
+  label('Usulan Salman al-Farisi',640,215,C.goldB,v*vis(t,a+7,b,.5),'"Di Persia, jika dikepung, kami menggali parit."');
+  trench(ease(prog(t,a+8,a+12.5)),v,prog(t,a+12,a+13));
+  caption(t,a+.6,b,'Rasulullah SAW bermusyawarah dengan para sahabat. Madinah terlindungi medan batu lava di timur dan barat, serta kebun kurma di selatan — hanya sisi utara yang terbuka. Salman al-Farisi mengusulkan menggali parit (khandaq), strategi yang belum dikenal bangsa Arab.',{y:620,w:1140});
+}
+function sGali(t){const a=T[4],b=T[5];if(t<a||t>b)return;
+  chapter(t,a,b,4,'Menggali Parit Bersama');const v=vis(t,a,b,.6);
+  // cross-section of trench
+  const gx=640,gy=380;c.save();c.globalAlpha=v;
+  c.fillStyle='#2a2418';c.fillRect(200,gy,880,140);
+  const depth=lerp(0,110,ease(prog(t,a+.5,a+7)));
+  c.fillStyle=C.ink;c.beginPath();c.moveTo(gx-130,gy);c.lineTo(gx-100,gy+depth);c.lineTo(gx+100,gy+depth);c.lineTo(gx+130,gy);c.closePath();c.fill();
+  c.strokeStyle=C.gold;c.lineWidth=1.5;c.beginPath();c.moveTo(200,gy);c.lineTo(gx-130,gy);c.lineTo(gx-100,gy+depth);c.lineTo(gx+100,gy+depth);c.lineTo(gx+130,gy);c.lineTo(1080,gy);c.stroke();
+  // soil piles & workers (abstract)
+  for(let i=0;i<12;i++){const side=i<6?-1:1,k=i%6,x=gx+side*(170+k*55),bob=Math.abs(Math.sin(t*4+i))*6;
+    c.fillStyle=C.goldB;c.beginPath();c.arc(x,gy-26-bob*.3,6,0,7);c.fill();c.fillRect(x-4,gy-20-bob*.3,8,18);
+    c.strokeStyle=C.goldP;c.lineWidth=2;c.beginPath();c.moveTo(x+side*-4,gy-14);c.lineTo(x+side*-14,gy-4+bob);c.stroke();}
+  // flying soil
+  for(let i=0;i<14;i++){const ph=(t*1.3+rnd(i))%1,side=rnd(i+4)<.5?-1:1;const x=gx+side*lerp(40,180,ph),y=gy+depth*.6-Math.sin(ph*Math.PI)*120;
+    c.fillStyle='#8a6a3a';c.globalAlpha=v*(depth>10?1:0);c.beginPath();c.arc(x,y,3,0,7);c.fill();}
+  c.restore();
+  txt('parit',gx,gy+depth/2+6,{size:14,align:'center',color:C.muted,alpha:v*prog(t,a+3,a+4),font:SANS,style:'italic'});
+  // facts
+  const facts=['Dikerjakan bersama: setiap 10 orang menggali ±40 hasta','Musim dingin, persediaan makanan sangat sedikit','Rasulullah SAW ikut menggali dan mengangkut tanah'];
+  facts.forEach((f,i)=>{const fv=v*eOut(prog(t,a+1.5+i*1.2,a+2.3+i*1.2));star8(232,190+i*40-6,8,C.gold,fv);txt(f,252,190+i*40,{size:20,alpha:fv});});
+  caption(t,a+5,b,'Saat sebuah batu keras tak bisa dipecahkan, Rasulullah SAW memukulnya tiga kali sambil bertakbir — disertai kabar gembira bahwa negeri Syam, Persia, dan Yaman kelak akan terbuka bagi Islam.',{y:610});
+}
+function sKepung(t){const a=T[5],b=T[6];if(t<a||t>b)return;
+  const v=vis(t,a,b,.7);baseMap(t,v,false);trench(1,v);chapter(t,a,b,5,'Pengepungan');
+  // muslim camp at Sala'
+  for(let i=0;i<14;i++){const x=540+(i%7)*20,y=362+Math.floor(i/7)*14;tent(x,y,C.goldB,v);}
+  label('Kaum Muslimin',460,372,C.goldB,v*prog(t,a+.5,a+1.2));
+  // ahzab arrive
+  const arr=ease(prog(t,a+1,a+5));
+  for(let i=0;i<60;i++){const isQ=i<36;const tx=isQ?380+rnd(i)*240:700+rnd(i)*200,ty=isQ?200+rnd(i+90)*60:180+rnd(i+90)*60;
+    const sx=isQ?150:1150,sy=isQ?150:120;const x=lerp(sx,tx,arr),y=lerp(sy,ty,arr);troop(x,y,C.maroonL,4,v*clamp(arr*3));}
+  label('Quraisy',470,165,C.maroonL,v*prog(t,a+4,a+5),'Abu Sufyan');
+  label('Ghathafan',800,148,C.maroonL,v*prog(t,a+4,a+5),'Uyainah');
+  // arrows exchanged across trench
+  if(t>a+6)for(let i=0;i<8;i++){const ph=((t-a)*0.9+rnd(i))%1;const up=i%2;const x=480+rnd(i+20)*340;
+    const y=up?lerp(345,240,ph):lerp(240,340,ph);c.save();c.globalAlpha=v*.7*Math.sin(ph*Math.PI);c.strokeStyle=up?C.goldP:C.maroonL;c.lineWidth=1.5;
+    c.beginPath();c.moveTo(x,y);c.lineTo(x+(up?3:-3),y+(up?12:-12));c.stroke();c.restore();}
+  // Amr bin Abdi Wudd crossing
+  const amr=vis(t,a+7.5,b,.4);if(amr>0){const jp=ease(prog(t,a+7.5,a+9));const x=lerp(700,680,jp),y=lerp(250,320,jp)-Math.sin(jp*Math.PI)*25;
+    c.save();c.globalAlpha=amr;c.fillStyle=C.maroonL;c.beginPath();c.arc(x,y,7,0,7);c.fill();
+    c.strokeStyle=C.maroonL;c.lineWidth=2;c.beginPath();c.arc(x,y,12+3*Math.sin(t*8),0,7);c.stroke();c.restore();
+    label('Amr bin Abdi Wudd',800,348,C.maroonL,amr,'dihadapi Ali bin Abi Thalib');}
+  // day counter
+  const days=Math.max(1,Math.min(4,1+Math.floor(4*prog(t,a+5,b-1))));
+  c.save();c.globalAlpha=v;rrect(1120,220,120,70,8);c.fillStyle='rgba(8,7,6,.85)';c.fill();c.strokeStyle=C.gold;c.stroke();c.restore();
+  txt('MINGGU KE-',1180,245,{size:12,align:'center',color:C.muted,alpha:v,font:SANS,ls:2});
+  txt(String(days),1180,280,{size:32,align:'center',color:C.goldB,alpha:v,weight:'bold'});
+  caption(t,a+1,a+7.3,'Pasukan Ahzab tiba dan terkejut melihat parit. Kuda-kuda mereka tak mampu melintas. Mereka pun mengepung Madinah hampir sebulan, saling berbalas panah di sepanjang parit.',{y:625,w:1140});
+  caption(t,a+7.6,b,'Beberapa penunggang kuda Quraisy berhasil melompati bagian parit yang sempit. Pemimpin mereka, Amr bin Abdi Wudd — pendekar yang ditakuti — menantang duel dan tewas di tangan Ali bin Abi Thalib.',{y:625,w:1140});
+}
+function sQuraizhah(t){const a=T[6],b=T[7];if(t<a||t>b)return;
+  const v=vis(t,a,b,.7);baseMap(t,v,false);trench(1,v);chapter(t,a,b,6,'Pengkhianatan dari Dalam');
+  for(let i=0;i<14;i++){tent(540+(i%7)*20,362+Math.floor(i/7)*14,C.goldB,v);}
+  for(let i=0;i<60;i++){const isQ=i<36;troop(isQ?380+rnd(i)*240:700+rnd(i)*200,isQ?200+rnd(i+90)*60:180+rnd(i+90)*60,C.maroonL,4,v);}
+  // Quraizhah fortress
+  const qx=P.quraizhah[0],qy=P.quraizhah[1];c.save();c.globalAlpha=v;c.fillStyle='#3a2a1a';c.fillRect(qx-24,qy-16,48,30);
+  c.fillStyle=C.maroonL;for(let i=0;i<4;i++)c.fillRect(qx-24+i*14,qy-22,8,6);c.restore();
+  label('Bani Quraizhah',qx,qy+46,C.maroonL,v);
+  // broken pact
+  const bp=prog(t,a+2,a+3.5);if(bp>0){c.save();c.globalAlpha=v;c.strokeStyle=bp<.5?C.goldB:C.maroonL;c.lineWidth=2;c.setLineDash([6,6]);
+    c.beginPath();c.moveTo(qx-30,qy-10);c.lineTo(lerp(qx-30,700,1),lerp(qy-10,470,1));c.stroke();c.setLineDash([]);
+    if(bp>.5){const mx=(qx-30+700)/2,my=(qy-10+470)/2;c.lineWidth=4;c.beginPath();c.moveTo(mx-12,my-12);c.lineTo(mx+12,my+12);c.moveTo(mx+12,my-12);c.lineTo(mx-12,my+12);c.stroke();}
+    c.restore();txt('perjanjian dilanggar',(qx+670)/2+70,(qy+460)/2+4,{size:13,color:C.maroonL,alpha:v*prog(t,a+3,a+3.6),font:SANS,style:'italic'});}
+  // danger pulse toward city
+  const dp=v*prog(t,a+4,a+5);c.save();c.globalAlpha=dp*(.35+.25*Math.sin(t*6));c.strokeStyle=C.maroonL;c.lineWidth=3;
+  c.beginPath();c.arc(...P.madinah,95+6*Math.sin(t*6),0,7);c.stroke();c.restore();
+  caption(t,a+.6,b,'Di saat genting, Bani Quraizhah — Yahudi yang terikat perjanjian damai dan tinggal di sisi tenggara Madinah — dibujuk Huyay bin Akhtab untuk membatalkan perjanjian. Kaum Muslimin kini terancam dari depan dan belakang. "…dan hati kalian naik menyesak sampai ke tenggorokan." (QS. Al-Ahzab: 10)',{y:615,w:1160});
+}
+function sNuaim(t){const a=T[7],b=T[8];if(t<a||t>b)return;
+  chapter(t,a,b,7,'Siasat Nu\'aim bin Mas\'ud');const v=vis(t,a,b,.6);
+  const nodes=[[380,300,'Quraisy'],[900,300,'Ghathafan'],[640,470,'Bani Quraizhah']];
+  const br=ease(prog(t,a+4,a+6));
+  // links
+  for(let i=0;i<3;i++)for(let j=i+1;j<3;j++){const [x1,y1]=nodes[i],[x2,y2]=nodes[j];const mx=(x1+x2)/2,my=(y1+y2)/2;
+    c.save();c.globalAlpha=v;c.strokeStyle=br>0?C.maroonL:C.goldB;c.lineWidth=2;
+    const gap=br*40,d=Math.hypot(x2-x1,y2-y1),ux=(x2-x1)/d,uy=(y2-y1)/d;
+    c.beginPath();c.moveTo(x1+ux*60,y1+uy*30);c.lineTo(mx-ux*gap,my-uy*gap);c.moveTo(mx+ux*gap,my+uy*gap);c.lineTo(x2-ux*60,y2-uy*30);c.stroke();c.restore();}
+  nodes.forEach(([x,y,n],i)=>{const shake=br>0&&br<1?Math.sin(t*40+i)*3:0;label(n,x+shake+(i==0?-br*30:i==1?br*30:0),y+(i==2?br*20:0),C.maroonL,v);});
+  // nuaim
+  const nv=v*eOut(prog(t,a+1,a+2));c.save();c.globalAlpha=nv;c.fillStyle=C.goldB;c.beginPath();
+  const np=(t-a)*.6;c.arc(640+Math.cos(np)*120,350+Math.sin(np)*50,7,0,7);c.fill();c.restore();
+  label('Nu\'aim bin Mas\'ud',640,220,C.goldB,nv,'baru masuk Islam, dipercaya semua pihak');
+  caption(t,a+.5,b,'Nu\'aim bin Mas\'ud dari Ghathafan diam-diam masuk Islam. Atas izin Rasulullah SAW — "perang adalah tipu daya" — ia menanamkan saling curiga antara Quraisy, Ghathafan, dan Bani Quraizhah hingga persekutuan mereka retak.',{y:620});
+}
+function sAngin(t){const a=T[8],b=T[9];if(t<a||t>b)return;
+  const v=vis(t,a,b,.7);baseMap(t,v,false);trench(1,v);chapter(t,a,b,8,'Pertolongan Allah');
+  // night tint
+  c.save();c.globalAlpha=v*.45;c.fillStyle='#05080f';c.fillRect(0,0,W,H);c.restore();
+  for(let i=0;i<14;i++)tent(540+(i%7)*20,362+Math.floor(i/7)*14,C.goldB,v);
+  const blow=ease(prog(t,a+2.5,a+6)),ret=ease(prog(t,a+6,b-.5));
+  for(let i=0;i<24;i++){const x=380+rnd(i+400)*560,y=170+rnd(i+500)*80;tent(x,y,C.maroonL,v,0,clamp(blow*(0.6+rnd(i)*.8)));}
+  for(let i=0;i<60;i++){const isQ=i<36;const bx=isQ?380+rnd(i)*240:700+rnd(i)*200,by=isQ?200+rnd(i+90)*60:180+rnd(i+90)*60;
+    const ex=isQ?120:1180,ey=isQ?120:110;troop(lerp(bx,ex,ret),lerp(by,ey,ret),C.maroonL,4,v*(1-ret));}
+  // wind streaks
+  const wi=v*prog(t,a+1,a+2.5)*(1-prog(t,b-2,b));c.save();
+  for(let i=0;i<70;i++){const sp=500+rnd(i)*500;const x=((rnd(i+1)*W*1.5+(t-a)*sp)%(W+300))-150,y=140+rnd(i+2)*360+Math.sin(t*3+i)*10;
+    c.globalAlpha=wi*(.2+.4*rnd(i+3));c.strokeStyle='#cfd8e8';c.lineWidth=1+rnd(i+4);c.beginPath();c.moveTo(x,y);c.quadraticCurveTo(x+40,y-6,x+90+rnd(i)*60,y);c.stroke();}
+  c.restore();
+  label('Ahzab mundur',640,140,C.goldB,v*prog(t,a+7,a+8));
+  caption(t,a+.6,b,'"Ingatlah nikmat Allah kepadamu ketika bala tentara datang, lalu Kami kirimkan kepada mereka angin topan dan tentara yang tidak dapat kamu lihat." (QS. Al-Ahzab: 9). Angin dingin yang dahsyat memporak-porandakan perkemahan. Abu Sufyan memerintahkan pulang — pengepungan berakhir.',{y:615,w:1160});
+}
+function sHasil(t){const a=T[9],b=T[10];if(t<a||t>b)return;
+  chapter(t,a,b,9,'Hasil Pertempuran');const v=vis(t,a,b,.6);
+  const cards=[['±1','bulan pengepungan','Madinah tetap bertahan'],['6','syuhada Muslim','termasuk Sa\'ad bin Mu\'adz (wafat kemudian)'],['10','korban dari Ahzab','koalisi bubar tanpa hasil']];
+  cards.forEach(([n,l,s],i)=>{const cv2=v*eOut(prog(t,a+.8+i*.7,a+1.6+i*.7));const x=170+i*330,y=170;
+    c.save();c.globalAlpha=cv2;rrect(x,y+(1-cv2)*20,280,170,12);c.fillStyle='rgba(30,27,20,.92)';c.fill();c.strokeStyle='rgba(201,168,76,.4)';c.stroke();c.restore();
+    txt(n,x+140,y+80+(1-cv2)*20,{size:56,align:'center',color:C.goldB,alpha:cv2,weight:'bold'});
+    txt(l,x+140,y+112+(1-cv2)*20,{size:18,align:'center',alpha:cv2});
+    para(s,x+140,y+140+(1-cv2)*20,250,{size:13,align:'center',color:C.muted,alpha:cv2,font:SANS});});
+  const qv=v*eOut(prog(t,a+3.5,a+4.5));
+  txt('"Sekarang kita yang akan menyerang mereka,',W/2,415,{size:28,align:'center',color:C.cream,alpha:qv,style:'italic'});
+  txt('dan mereka tidak akan menyerang kita lagi."',W/2,452,{size:28,align:'center',color:C.cream,alpha:qv,style:'italic'});
+  txt('— Rasulullah SAW (HR. Bukhari)',W/2,488,{size:16,align:'center',color:C.gold,alpha:qv,font:SANS});
+  caption(t,a+5,b,'Khandaq menjadi titik balik: setelahnya Quraisy tak pernah lagi menyerang Madinah. Inisiatif berpindah ke tangan kaum Muslimin, hingga Perjanjian Hudaibiyah dan Fathu Makkah.',{y:610});
+}
+function sPelajaran(t){const a=T[10],b=T[11];if(t<a||t>b)return;
+  chapter(t,a,b,10,'Pelajaran Berharga');const v=vis(t,a,b,.6);
+  const L=[['Musyawarah','Pemimpin mendengar dan menerima usulan terbaik, dari siapa pun datangnya.'],
+           ['Keteladanan','Rasulullah SAW turun langsung bekerja, lapar dan lelah bersama sahabat.'],
+           ['Ikhtiar & Tawakal','Strategi matang dipadukan dengan doa dan keyakinan penuh kepada Allah.'],
+           ['Persatuan','Kekuatan besar runtuh oleh perpecahan; umat yang bersatu bertahan.'],
+           ['Optimisme','Di tengah krisis, Nabi SAW menyampaikan kabar gembira masa depan Islam.']];
+  L.forEach(([h,s],i)=>{const lv=v*eOut(prog(t,a+.8+i*1.6,a+1.6+i*1.6));const y=180+i*92,x=150+(1-lv)*-30;
+    c.save();c.globalAlpha=lv;c.fillStyle=C.gold;c.beginPath();c.arc(x+20,y-8,22,0,7);c.fill();c.restore();
+    txt(String(i+1),x+20,y,{size:22,align:'center',color:C.ink,alpha:lv,weight:'bold'});
+    txt(h,x+64,y-8,{size:26,color:C.goldB,alpha:lv,weight:'bold'});
+    txt(s,x+64,y+22,{size:19,color:C.cream,alpha:lv*.9});});
+}
+function sPenutup(t){const a=T[11],b=T[12],v=vis(t,a,b,.8);if(t<a)return;
+  star8(W/2,230,40,C.gold,v,t*.15);
+  txt('"Inilah yang dijanjikan Allah dan Rasul-Nya kepada kita."',W/2,335,{size:30,align:'center',alpha:v*eOut(prog(t,a+.5,a+1.5)),style:'italic'});
+  txt('(QS. Al-Ahzab: 22)',W/2,372,{size:16,align:'center',color:C.gold,alpha:v*eOut(prog(t,a+.8,a+1.8)),font:SANS});
+  divider(W/2,400,360,v*eOut(prog(t,a+1,a+2)));
+  txt('PERANG KHANDAQ · 5 H',W/2,445,{size:18,align:'center',color:C.gold,alpha:v*eOut(prog(t,a+1.5,a+2.5)),font:SANS,ls:5});
+  txt('Sirah-Based Tour Leader Training',W/2,600,{size:15,align:'center',color:C.muted,alpha:v*eOut(prog(t,a+2,a+3)),style:'italic'});
+}
+const SCENES=[sTitle,sLatar,sKekuatan,sParit,sGali,sKepung,sQuraizhah,sNuaim,sAngin,sHasil,sPelajaran,sPenutup];
+
+function renderAt(t){
+  c.setTransform(1,0,0,1,0,0);c.globalAlpha=1;background(t);
+  SCENES.forEach(s=>s(t));
+  frame();
+  // progress bar
+  c.fillStyle='rgba(201,168,76,.15)';c.fillRect(0,H-3,W,3);c.fillStyle=C.gold;c.fillRect(0,H-3,W*t/DUR,3);
+  // global fade
+  const f=Math.min(prog(t,0,.6),1-prog(t,DUR-.8,DUR));if(f<1){c.fillStyle=`rgba(8,7,6,${1-f})`;c.fillRect(0,0,W,H);}
+}
+window.renderAt=renderAt;window.DUR=DUR;
+
+// player
+let playing=false,t0=0,cur=0;const pp=document.getElementById('pp'),sk=document.getElementById('sk'),tm=document.getElementById('tm');
+const fmt=s=>`${Math.floor(s/60)}:${String(Math.floor(s%60)).padStart(2,'0')}`;
+function show(t){cur=t;renderAt(t);sk.value=Math.round(t/DUR*1000);tm.textContent=`${fmt(t)} / ${fmt(DUR)}`;}
+function loop(now){if(!playing)return;const t=(now-t0)/1000;if(t>=DUR){playing=false;pp.textContent='▶ Putar';show(DUR);return;}show(t);requestAnimationFrame(loop);}
+pp.onclick=()=>{if(playing){playing=false;pp.textContent='▶ Putar';}else{if(cur>=DUR)cur=0;playing=true;pp.textContent='❚❚ Jeda';t0=performance.now()-cur*1000;requestAnimationFrame(loop);}};
+sk.oninput=()=>{const t=sk.value/1000*DUR;show(t);if(playing)t0=performance.now()-t*1000;};
+if(location.hash==='#capture')document.body.classList.add('capture');
+show(3);
+</script>
+</body>
+</html>
