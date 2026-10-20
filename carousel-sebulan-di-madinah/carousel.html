@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sebulan di Madinah — Carousel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0d0c09;--deep:#14120d;--gold:#C9A84C;--gold-b:#E8C96A;--gold-p:#F0DCA0;--gold-d:#8a6f2a;
+  --cream:#F5EDD3;--cream-2:#EFE3C2;--maroon:#6B1F1F;--maroon-d:#3d1010;--teal:#16332f;--teal-d:#0d211e;
+  --muted:#a89a74;
+  --serif:'Cormorant Garamond','Georgia',serif;--sans:'Manrope','Inter',sans-serif;--ar:'Amiri',serif;
+}
+body{background:#2a2620;font-family:var(--sans);display:flex;flex-direction:column;align-items:center;gap:40px;padding:40px 0;}
+.saw{font-family:var(--ar);font-weight:400;font-style:normal;}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;color:var(--cream);padding:96px 96px 0;display:flex;flex-direction:column;}
+.slide > *{position:relative;z-index:2}
+/* chrome */
+.top{display:flex;justify-content:space-between;align-items:center;font-size:20px;letter-spacing:6px;text-transform:uppercase;font-weight:700;color:var(--gold);}
+.top .num{font-family:var(--serif);font-size:30px;letter-spacing:2px;font-weight:600}
+.top .num span{opacity:.45}
+.bottom{position:absolute;left:96px;right:96px;bottom:64px;display:flex;justify-content:space-between;align-items:center;font-size:19px;letter-spacing:4px;font-weight:700;text-transform:uppercase;color:var(--gold);z-index:3}
+.bottom .swipe{display:flex;align-items:center;gap:14px}
+.bottom .swipe svg{width:56px;height:16px}
+.rule{height:1px;background:linear-gradient(90deg,var(--gold-d),transparent);margin:0}
+/* backgrounds */
+.pattern{position:absolute;inset:0;z-index:0;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23C9A84C' stroke-width='1.4'%3E%3Cpath d='M60 10 L74 46 L110 60 L74 74 L60 110 L46 74 L10 60 L46 46 Z'/%3E%3Cpath d='M25 25 L60 39 L95 25 L81 60 L95 95 L60 81 L25 95 L39 60 Z'/%3E%3Ccircle cx='60' cy='60' r='12'/%3E%3C/g%3E%3C/svg%3E");background-size:120px 120px;}
+.vignette{position:absolute;inset:0;z-index:1;pointer-events:none}
+h1,h2{font-family:var(--serif);font-weight:600;line-height:1.02;letter-spacing:-1px}
+h1 em,h2 em{font-style:italic;color:var(--gold-b);font-weight:600}
+p{font-size:36px;line-height:1.45;font-weight:500}
+
+/* ===== S1 HOOK ===== */
+.s1{background:var(--ink)}
+.s1 .vignette{background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(201,168,76,.12),transparent 65%),radial-gradient(ellipse 60% 50% at 90% 100%,rgba(107,31,31,.25),transparent 60%)}
+.s1 .arch{position:absolute;z-index:1;left:50%;top:150px;transform:translateX(-50%);width:760px;height:1000px;opacity:.5}
+.s1 h1{font-size:116px;margin-top:150px;text-transform:none}
+.s1 h1 .q{color:var(--gold)}
+.s1 .nots{margin-top:64px;display:flex;flex-direction:column;gap:14px}
+.s1 .nots p{color:var(--muted);font-size:36px}
+.s1 .nots s{text-decoration-color:rgba(201,168,76,.75);text-decoration-thickness:3px}
+.s1 .but{margin-top:44px;padding-left:32px;border-left:3px solid var(--gold)}
+.s1 .but p{font-size:42px;color:var(--cream);font-weight:600;line-height:1.35}
+
+/* ===== S2 SUBUH ===== */
+.s2{background:linear-gradient(180deg,#0a1220 0%,#14203a 38%,#3a3550 62%,#9a6a48 86%,#d79f5c 100%)}
+.s2 .vignette{background:radial-gradient(ellipse 70% 30% at 50% 100%,rgba(240,200,120,.45),transparent 70%)}
+.s2 .stars{position:absolute;inset:0;z-index:1;background-image:radial-gradient(1.6px 1.6px at 12% 14%,#fff8,transparent),radial-gradient(1.4px 1.4px at 28% 22%,#fff6,transparent),radial-gradient(2px 2px at 64% 12%,#fff9,transparent),radial-gradient(1.4px 1.4px at 82% 26%,#fff6,transparent),radial-gradient(1.6px 1.6px at 46% 30%,#fff5,transparent),radial-gradient(1.2px 1.2px at 90% 8%,#fff7,transparent),radial-gradient(1.2px 1.2px at 6% 34%,#fff5,transparent)}
+.s2 .crescent{position:absolute;z-index:1;right:110px;top:160px;width:70px;height:70px;border-radius:50%;box-shadow:-14px 8px 0 0 var(--gold-p);transform:rotate(-20deg);opacity:.9}
+.s2 h1{font-size:104px;margin-top:100px}
+.s2 .body{margin-top:56px;display:flex;flex-direction:column;gap:10px}
+.s2 .body p{font-size:38px}
+.s2 .days{margin-top:48px;display:grid;grid-template-columns:repeat(10,1fr);gap:14px;max-width:660px}
+.s2 .days i{display:block;aspect-ratio:1;border-radius:50%;border:2px solid rgba(240,220,160,.7);background:rgba(240,220,160,.12)}
+.s2 .days i.f{background:var(--gold-p);border-color:var(--gold-p)}
+.s2 .dlabel{margin-top:18px;font-size:20px;letter-spacing:4px;text-transform:uppercase;font-weight:700;color:var(--gold-p);opacity:.9}
+.s2 .end{margin-top:34px;font-family:var(--serif);font-style:italic;font-size:46px;color:var(--cream);font-weight:500}
+.s2 .skyline{position:absolute;left:0;width:100%;bottom:118px;height:110px;z-index:1}
+.s2 .ground{position:absolute;left:0;right:0;bottom:0;height:120px;background:#17110c;z-index:1}
+.s2 .top,.s2 .bottom{color:var(--gold-p)}
+
+/* ===== S3 RUMAH ===== */
+.s3{background:var(--cream);color:var(--ink)}
+.s3 .pattern{opacity:.09}
+.s3 .vignette{background:radial-gradient(ellipse 70% 50% at 100% 0%,rgba(201,168,76,.22),transparent 65%)}
+.s3 .top,.s3 .bottom{color:var(--maroon)}
+.s3 h1{font-size:100px;margin-top:80px;color:var(--ink)}
+.s3 h1 em{color:var(--maroon)}
+.s3 .lead{margin-top:36px;font-size:38px;color:#5a4d2e;font-weight:600}
+.s3 ul{list-style:none;margin-top:30px;display:flex;flex-direction:column}
+.s3 li{display:flex;gap:30px;align-items:baseline;padding:20px 0;border-bottom:1.5px solid rgba(107,31,31,.18);font-size:37px;font-weight:500;line-height:1.35}
+.s3 li b{font-family:var(--serif);font-style:italic;font-size:44px;color:var(--gold-d);min-width:56px;font-weight:600}
+.s3 .closing{margin-top:40px;font-family:var(--serif);font-size:58px;line-height:1.1;font-weight:600}
+.s3 .closing em{color:var(--maroon);font-style:italic}
+
+/* ===== S4 WAKTU ===== */
+.s4{background:var(--teal-d)}
+.s4 .vignette{background:radial-gradient(ellipse 80% 60% at 0% 100%,rgba(42,96,88,.55),transparent 65%),radial-gradient(ellipse 60% 40% at 100% 0%,rgba(201,168,76,.12),transparent 60%)}
+.s4 .big30{position:absolute;z-index:1;right:-40px;top:120px;font-family:var(--serif);font-size:720px;line-height:.8;font-weight:700;color:transparent;-webkit-text-stroke:2px rgba(201,168,76,.10)}
+.s4 h1{font-size:96px;margin-top:80px;max-width:860px}
+.s4 .vs{margin-top:52px;display:flex;flex-direction:column;gap:6px}
+.s4 .vs p{font-size:38px}
+.s4 .vs .dim{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(201,168,76,.6);text-decoration-thickness:2px}
+.s4 .vs .hi{color:var(--gold-b);font-weight:700}
+.s4 .cards{margin-top:52px;display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.s4 .card{border:1.5px solid rgba(201,168,76,.4);background:rgba(13,12,9,.35);border-radius:22px;padding:34px 34px 36px}
+.s4 .card .ar{font-family:var(--ar);font-size:56px;color:var(--gold-b);line-height:1;direction:rtl;text-align:right}
+.s4 .card h3{margin-top:22px;font-size:34px;font-weight:800;letter-spacing:.5px}
+.s4 .card p{margin-top:10px;font-size:27px;color:#cfc5a6;line-height:1.4}
+.s4 .quote{margin-top:52px;font-family:var(--serif);font-style:italic;font-size:46px;line-height:1.18;font-weight:500;color:var(--cream)}
+.s4 .quote em{color:var(--gold-b)}
+
+/* ===== S5 SIRAH ===== */
+.s5{background:var(--maroon-d)}
+.s5 .vignette{background:radial-gradient(ellipse 90% 60% at 50% 0%,rgba(155,48,48,.45),transparent 65%),radial-gradient(ellipse 70% 40% at 50% 100%,rgba(0,0,0,.5),transparent 70%)}
+.s5 .mountain{position:absolute;z-index:1;left:0;width:100%;bottom:0;height:420px;opacity:.55}
+.s5 h1{font-size:88px;margin-top:70px}
+.s5 .tl{margin-top:44px;position:relative;padding-left:58px}
+.s5 .tl::before{content:'';position:absolute;left:12px;top:18px;bottom:30px;width:2px;background:linear-gradient(180deg,var(--gold),rgba(201,168,76,.15))}
+.s5 .item{position:relative;padding-bottom:22px}
+.s5 .item::before{content:'';position:absolute;left:-58px;top:12px;width:26px;height:26px;border-radius:50%;background:var(--maroon-d);border:3px solid var(--gold)}
+.s5 .item .k{font-size:19px;letter-spacing:4px;text-transform:uppercase;font-weight:800;color:var(--gold)}
+.s5 .item p{font-size:33px;margin-top:4px;line-height:1.35}
+.s5 .closing{margin-top:14px;padding:24px 36px;border:1.5px solid rgba(201,168,76,.45);border-radius:20px;background:rgba(13,12,9,.35)}
+.s5 .closing p{font-family:var(--serif);font-size:42px;line-height:1.15;font-weight:600}
+.s5 .closing s{color:var(--muted);text-decoration-thickness:2px;text-decoration-color:var(--gold)}
+.s5 .closing em{color:var(--gold-b)}
+
+/* ===== S6 REVEAL ===== */
+.s6{background:linear-gradient(170deg,#f7efd8 0%,#efe0b8 100%);color:var(--ink)}
+.s6 .pattern{opacity:.12}
+.s6 .vignette{background:radial-gradient(ellipse 70% 50% at 50% 35%,rgba(255,255,255,.55),transparent 70%)}
+.s6 .top,.s6 .bottom{color:var(--maroon)}
+.s6 .pre{margin-top:64px;font-family:var(--serif);font-size:58px;line-height:1.08;font-weight:600;text-align:center}
+.s6 .pre em{font-style:italic;color:var(--maroon)}
+.s6 .intro{margin-top:34px;text-align:center;font-size:20px;letter-spacing:8px;text-transform:uppercase;font-weight:800;color:var(--gold-d)}
+.s6 .logo{margin:14px auto 0;text-align:center}
+.s6 .logo .uim{font-family:var(--serif);font-size:200px;font-weight:700;line-height:.9;color:var(--maroon);letter-spacing:6px}
+.s6 .logo .full{margin-top:10px;font-size:30px;letter-spacing:9px;text-transform:uppercase;font-weight:800}
+.s6 .badges{margin-top:30px;display:flex;justify-content:center;gap:16px}
+.s6 .badge{padding:14px 28px;border-radius:100px;font-size:25px;font-weight:700}
+.s6 .badge.solid{background:var(--maroon);color:var(--cream)}
+.s6 .badge.line{border:2px solid var(--maroon);color:var(--maroon)}
+.s6 .desc{margin-top:28px;text-align:center;font-size:28px;line-height:1.45;color:#5a4d2e;font-weight:500;padding:0 30px}
+.s6 .pillars{margin-top:34px;display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
+.s6 .pill{background:var(--ink);color:var(--cream);border-radius:18px;padding:26px 10px 24px;text-align:center}
+.s6 .pill .ic{width:46px;height:46px;margin:0 auto 14px;display:block}
+.s6 .pill span{display:block;font-size:21px;font-weight:700;line-height:1.25}
+.s6 .closing{margin-top:30px;text-align:center;font-family:var(--serif);font-size:40px;line-height:1.15;font-weight:600}
+.s6 .closing em{color:var(--maroon);font-style:italic}
+
+/* ===== S7 CTA ===== */
+.s7{background:var(--ink)}
+.s7 .vignette{background:radial-gradient(ellipse 80% 55% at 50% 0%,rgba(201,168,76,.16),transparent 65%),radial-gradient(ellipse 60% 40% at 0% 100%,rgba(107,31,31,.3),transparent 60%)}
+.s7 h1{font-size:82px;margin-top:64px}
+.s7 .ticket{margin-top:46px;border:1.5px solid rgba(201,168,76,.5);border-radius:26px;overflow:hidden;background:rgba(30,27,20,.7)}
+.s7 .ticket .head{padding:24px 36px;background:linear-gradient(90deg,#3a2e12,#6B5620,#3a2e12);font-size:24px;letter-spacing:6px;font-weight:800;text-transform:uppercase;color:var(--gold-p)}
+.s7 .ticket .grid{display:grid;grid-template-columns:1fr 1fr;}
+.s7 .ticket .cell{padding:26px 36px;border-top:1px solid rgba(201,168,76,.18)}
+.s7 .ticket .cell:nth-child(odd){border-right:1px solid rgba(201,168,76,.18)}
+.s7 .ticket .lbl{font-size:18px;letter-spacing:4px;text-transform:uppercase;font-weight:700;color:var(--muted)}
+.s7 .ticket .val{margin-top:6px;font-family:var(--serif);font-size:48px;font-weight:700;color:var(--cream);line-height:1.05}
+.s7 .ticket .val small{font-family:var(--sans);font-size:22px;font-weight:600;color:var(--muted)}
+.s7 .ticket .val.gold{color:var(--gold-b)}
+.s7 .ask{margin-top:42px;font-size:33px;line-height:1.4;color:#d9cfb0}
+.s7 .dm{margin-top:28px;display:flex;align-items:center;gap:26px;padding:28px 36px;border-radius:24px;background:linear-gradient(90deg,#C9A84C,#E8C96A);color:var(--ink)}
+.s7 .dm svg{width:62px;height:62px;flex-shrink:0}
+.s7 .dm p{font-size:28px;font-weight:600;line-height:1.3}
+.s7 .dm b{font-weight:800;font-size:40px;letter-spacing:2px}
+.s7 .url{position:absolute;left:0;right:0;bottom:62px;text-align:center;font-size:30px;letter-spacing:8px;font-weight:800;color:var(--gold);z-index:3}
+</style>
+</head>
+<body>
+
+<!-- ================= SLIDE 1 ================= -->
+<section class="slide s1" id="s1">
+  <div class="pattern"></div><div class="vignette"></div>
+  <svg class="arch" viewBox="0 0 760 1000" fill="none">
+    <path d="M30 1000 V430 C30 210 200 70 380 10 C560 70 730 210 730 430 V1000" stroke="#C9A84C" stroke-width="2"/>
+    <path d="M70 1000 V440 C70 240 220 112 380 58 C540 112 690 240 690 440 V1000" stroke="#C9A84C" stroke-opacity=".45" stroke-width="1.5"/>
+  </svg>
+  <div class="top"><div>Sebulan di Madinah</div><div class="num">01<span> / 07</span></div></div>
+  <h1>Pernah kebayang nggak, tinggal <em>sebulan</em> di&nbsp;Madinah<span class="q">?</span></h1>
+  <div class="nots">
+    <p>Bukan <s>datang 3 hari.</s></p>
+    <p>Bukan <s>sekadar ziarah, foto, lalu pulang.</s></p>
+  </div>
+  <div class="but"><p>Tapi benar-benar menjalani hari-hari di kota Rasulullah <span class="saw">ﷺ</span>.</p></div>
+  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
+</section>
+
+<!-- ================= SLIDE 2 ================= -->
+<section class="slide s2" id="s2">
+  <div class="stars"></div><div class="ground"></div><div class="crescent"></div><div class="vignette"></div>
+  <svg class="skyline" viewBox="0 0 1080 260" preserveAspectRatio="none" fill="#17110c">
+    <path d="M0 262V200h120v-30h60v30h80v-50h40v50h70V120l6-60 6 60v80h60v-40c0-30 40-58 80-58s80 28 80 58v40h60V120l6-60 6 60v80h80v-40h60v40h100v-30h80v30h100v62z"/>
+  </svg>
+  <div class="top"><div>Sebulan di Madinah</div><div class="num">02<span> / 07</span></div></div>
+  <h1>Bangun tidur, nggak perlu <em>buru-buru.</em></h1>
+  <div class="body">
+    <p>Subuh di Masjid Nabawi.</p>
+    <p>Selesai shalat, masih punya waktu untuk duduk membaca Al-Qur'an.</p>
+  </div>
+  <div class="days">
+    <i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+  </div>
+  <div class="dlabel">Hari ini · Besok · Lusa · … · Hari ke-30</div>
+  <div class="end">Begitu terus, selama sebulan.<br/>Nggak sedang dikejar jadwal pindah hotel.</div>
+  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
+</section>
+
+<!-- ================= SLIDE 3 ================= -->
+<section class="slide s3" id="s3">
+  <div class="pattern"></div><div class="vignette"></div>
+  <div class="top"><div>Sebulan di Madinah</div><div class="num">03<span> / 07</span></div></div>
+  <h1>Madinah bukan lagi sekadar <em>destinasi.</em></h1>
+  <p class="lead">Bayangkan…</p>
+  <ul>
+    <li><b>i.</b><span>Mulai hafal jalan menuju masjid.</span></li>
+    <li><b>ii.</b><span>Punya tempat favorit untuk duduk membaca Al-Qur'an.</span></li>
+    <li><b>iii.</b><span>Menemukan warung langganan.</span></li>
+    <li><b>iv.</b><span>Mengenali ritme kehidupan di sekitar Masjid Nabawi.</span></li>
+  </ul>
+  <div class="closing">Pelan-pelan, Madinah terasa seperti <em>rumah kedua.</em></div>
+  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
+</section>
+
+<!-- ================= SLIDE 4 ================= -->
+<section class="slide s4" id="s4">
+  <div class="pattern"></div><div class="vignette"></div>
+  <div class="big30">30</div>
+  <div class="top"><div>Sebulan di Madinah</div><div class="num">04<span> / 07</span></div></div>
+  <h1>Kalau punya waktu sebulan, mau dipakai <em>buat apa?</em></h1>
+  <div class="vs">
+    <p class="dim">Bukan sekadar memperbanyak jumlah ibadah.</p>
+    <p class="hi">Tapi juga memperbaiki kualitasnya.</p>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="ar">تَحْسِين</div><h3>Belajar Tahsin</h3><p>Agar bacaan Al-Qur'an semakin baik.</p></div>
+    <div class="card"><div class="ar">العَرَبِيَّة</div><h3>Belajar Bahasa Arab</h3><p>Agar sedikit demi sedikit memahami apa yang dibaca.</p></div>
+  </div>
+  <div class="quote">Karena perjalanan terbaik bukan cuma mengubah lokasi, tapi juga <em>memperbaiki diri.</em></div>
+  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
+</section>
+
+<!-- ================= SLIDE 5 ================= -->
+<section class="slide s5" id="s5">
+  <div class="pattern"></div><div class="vignette"></div>
+  <svg class="mountain" viewBox="0 0 1080 420" preserveAspectRatio="none" fill="#0d0c09">
+    <path d="M0 420V300l90-60 70 30 110-120 80 70 90-110 120 120 70-40 110 110 90-70 120 90 130-50v150z" opacity=".7"/>
+  </svg>
+  <div class="top"><div>Sebulan di Madinah</div><div class="num">05<span> / 07</span></div></div>
+  <h1>Belajar sirah, langsung di kota tempat <em>kisah itu terjadi.</em></h1>
+  <div class="tl">
+    <div class="item"><div class="k">Uhud</div><p>Belajar tentang Uhud, lalu mengunjungi kawasan Uhud.</p></div>
+    <div class="item"><div class="k">Hijrah</div><p>Mempelajari perjalanan hijrah Rasulullah <span class="saw">ﷺ</span>.</p></div>
+    <div class="item"><div class="k">Para Sahabat</div><p>Memahami kisah para sahabat di tempat-tempat yang berkaitan dengan kehidupan mereka.</p></div>
+    <div class="item"><div class="k">Berkuda</div><p>Bahkan mencoba pengalaman berkuda.</p></div>
+  </div>
+  <div class="closing"><p>Bukan <s>sekadar city tour.</s><br/>Tapi perjalanan yang <em>penuh pelajaran.</em></p></div>
+  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
+</section>
+
+<!-- ================= SLIDE 6 ================= -->
+<section class="slide s6" id="s6">
+  <div class="pattern"></div><div class="vignette"></div>
+  <div class="top"><div>Sebulan di Madinah</div><div class="num">06<span> / 07</span></div></div>
+  <div class="pre">Kami ingin mengajakmu tinggal <em>lebih lama</em> di Madinah.</div>
+  <div class="intro">— Memperkenalkan —</div>
+  <div class="logo"><div class="uim">UIM</div><div class="full">Umroh Intensive Program</div></div>
+  <div class="badges"><div class="badge solid">40 Hari Perjalanan</div><div class="badge line">± Sebulan di Madinah</div></div>
+  <div class="desc">Dengan konsep belajar dan beribadah, termasuk kesempatan menghabiskan sekitar sebulan di Madinah.</div>
+  <div class="pillars">
+    <div class="pill"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="#E8C96A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 12c-5-4-12-4-18-2v26c6-2 13-2 18 2 5-4 12-4 18-2V10c-6-2-13-2-18 2zM24 12v26"/></svg><span>Tahsin<br/>Al-Qur'an</span></div>
+    <div class="pill"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="#E8C96A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10h32v22H22l-8 7v-7H8z"/><path d="M30 18c-2 6-8 8-12 6M18 18h.01"/></svg><span>Bahasa Arab</span></div>
+    <div class="pill"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="#E8C96A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 40l12-18 8 10 6-8 14 16z"/><circle cx="34" cy="12" r="4"/></svg><span>Sirah Nabawiyah</span></div>
+    <div class="pill"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="#E8C96A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 42V30c-4-2-6-6-4-10l8-12 6 2 4-4 2 6c6 2 10 8 10 14v16"/><path d="M22 18h.01M10 24l6 2"/></svg><span>Pengalaman Berkuda</span></div>
+    <div class="pill"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="#E8C96A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 42V26c0-8 7-14 16-16 9 2 16 8 16 16v16"/><path d="M24 10V4M18 42V32a6 6 0 0 1 12 0v10M4 42h40"/></svg><span>Ibadah di<br/>Masjid Nabawi</span></div>
+  </div>
+  <div class="closing">Bukan sekadar umroh yang lebih panjang.<br/>Tapi perjalanan yang ingin kita bawa<br/><em>manfaatnya sampai pulang.</em></div>
+  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
+</section>
+
+<!-- ================= SLIDE 7 ================= -->
+<section class="slide s7" id="s7">
+  <div class="pattern"></div><div class="vignette"></div>
+  <div class="top"><div>Sebulan di Madinah</div><div class="num">07<span> / 07</span></div></div>
+  <h1>Sebulan di Madinah. Mungkin ini kesempatan yang <em>selama ini kamu tunggu.</em></h1>
+  <div class="ticket">
+    <div class="head">Umroh Intensive Program 2027</div>
+    <div class="grid">
+      <div class="cell"><div class="lbl">Start Jakarta</div><div class="val">20 Juni 2027</div></div>
+      <div class="cell"><div class="lbl">Total Perjalanan</div><div class="val">40 Hari</div></div>
+      <div class="cell"><div class="lbl">Mulai</div><div class="val gold">Rp39,9 jt <small>/orang · Quad</small></div></div>
+      <div class="cell"><div class="lbl">Usia 10–20 Tahun</div><div class="val">Diskon <span style="color:var(--gold-b)">Rp2 jt</span></div></div>
+    </div>
+  </div>
+  <p class="ask">Ingin tahu bagaimana konsep tinggal, belajar, dan beribadah selama sebulan di Madinah?</p>
+  <div class="dm">
+    <svg viewBox="0 0 48 48" fill="none" stroke="#0d0c09" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M44 4L22 26M44 4L30 44l-8-18-18-8z"/></svg>
+    <p>DM <b>“MADINAH”</b><br/>untuk mendapatkan itinerary &amp; informasi lengkap.</p>
+  </div>
+  <div class="url">MUDAHKEBAITULLAH.ID</div>
+</section>
+
+</body>
+</html>
