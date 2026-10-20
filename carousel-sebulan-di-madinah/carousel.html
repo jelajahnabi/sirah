@@ -5,288 +5,348 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Sebulan di Madinah — Carousel</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@700&family=Archivo:wdth,wght@62..125,700..900&family=Montserrat:wght@600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --ink:#0d0c09;--deep:#14120d;--gold:#C9A84C;--gold-b:#E8C96A;--gold-p:#F0DCA0;--gold-d:#8a6f2a;
-  --cream:#F5EDD3;--cream-2:#EFE3C2;--maroon:#6B1F1F;--maroon-d:#3d1010;--teal:#16332f;--teal-d:#0d211e;
-  --muted:#a89a74;
-  --serif:'Cormorant Garamond','Georgia',serif;--sans:'Manrope','Inter',sans-serif;--ar:'Amiri',serif;
-}
-body{background:#2a2620;font-family:var(--sans);display:flex;flex-direction:column;align-items:center;gap:40px;padding:40px 0;}
-.saw{font-family:var(--ar);font-weight:400;font-style:normal;}
-.slide{width:1080px;height:1350px;position:relative;overflow:hidden;color:var(--cream);padding:96px 96px 0;display:flex;flex-direction:column;}
-.slide > *{position:relative;z-index:2}
-/* chrome */
-.top{display:flex;justify-content:space-between;align-items:center;font-size:20px;letter-spacing:6px;text-transform:uppercase;font-weight:700;color:var(--gold);}
-.top .num{font-family:var(--serif);font-size:30px;letter-spacing:2px;font-weight:600}
-.top .num span{opacity:.45}
-.bottom{position:absolute;left:96px;right:96px;bottom:64px;display:flex;justify-content:space-between;align-items:center;font-size:19px;letter-spacing:4px;font-weight:700;text-transform:uppercase;color:var(--gold);z-index:3}
-.bottom .swipe{display:flex;align-items:center;gap:14px}
-.bottom .swipe svg{width:56px;height:16px}
-.rule{height:1px;background:linear-gradient(90deg,var(--gold-d),transparent);margin:0}
-/* backgrounds */
-.pattern{position:absolute;inset:0;z-index:0;opacity:.07;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' stroke='%23C9A84C' stroke-width='1.4'%3E%3Cpath d='M60 10 L74 46 L110 60 L74 74 L60 110 L46 74 L10 60 L46 46 Z'/%3E%3Cpath d='M25 25 L60 39 L95 25 L81 60 L95 95 L60 81 L25 95 L39 60 Z'/%3E%3Ccircle cx='60' cy='60' r='12'/%3E%3C/g%3E%3C/svg%3E");background-size:120px 120px;}
-.vignette{position:absolute;inset:0;z-index:1;pointer-events:none}
-h1,h2{font-family:var(--serif);font-weight:600;line-height:1.02;letter-spacing:-1px}
-h1 em,h2 em{font-style:italic;color:var(--gold-b);font-weight:600}
-p{font-size:36px;line-height:1.45;font-weight:500}
+:root{--y:#E9C42B;--y-d:#b8961c;--cream:#EEE8DA;--ink:#0a0f08;--line:rgba(233,196,43,.55);--panel:rgba(12,16,10,.72);}
+body{background:#111;display:flex;flex-direction:column;align-items:center;gap:40px;padding:40px 0;font-family:'Montserrat',sans-serif}
+.saw{font-family:'Amiri',serif;font-weight:700;text-transform:none;letter-spacing:0}
+.slide{width:1080px;height:1350px;position:relative;overflow:hidden;color:var(--cream);background:radial-gradient(ellipse 75% 60% at 22% 22%,#56701e 0%,#2f4416 40%,#142012 72%,#070b06 100%)}
+.slide.v2{background:radial-gradient(ellipse 75% 60% at 78% 25%,#56701e 0%,#2f4416 40%,#142012 72%,#070b06 100%)}
+.slide.v3{background:radial-gradient(ellipse 80% 55% at 50% 15%,#56701e 0%,#2f4416 42%,#142012 74%,#070b06 100%)}
+.layer{position:absolute;inset:0;pointer-events:none}
+.blot{background-image:var(--blot);background-size:cover;mix-blend-mode:overlay;opacity:.9}
+.specks{background-image:var(--specks);background-size:540px 540px;opacity:.35;mix-blend-mode:screen}
+.grain{background-image:var(--grain);background-size:240px 240px;opacity:.22;mix-blend-mode:overlay}
+.fold{background:linear-gradient(90deg,transparent 49.6%,rgba(255,255,255,.05) 50%,rgba(0,0,0,.18) 50.4%,transparent 51%),linear-gradient(180deg,transparent 31.6%,rgba(255,255,255,.04) 32%,rgba(0,0,0,.15) 32.3%,transparent 33%)}
+.vig{background:radial-gradient(ellipse 90% 80% at 50% 50%,transparent 55%,rgba(0,0,0,.65) 100%)}
+.leak{filter:blur(6px)}
+.leak i{position:absolute;border-radius:50%;border:26px solid rgba(120,220,210,.16);box-shadow:0 0 60px 10px rgba(120,220,210,.18),inset 0 0 60px 10px rgba(120,220,210,.12)}
+.ghost{position:absolute;font-family:'Archivo';font-stretch:125%;font-weight:900;font-size:520px;line-height:1;color:transparent;-webkit-text-stroke:3px rgba(233,196,43,.08);pointer-events:none}
+.beads{position:absolute;inset:0;pointer-events:none;z-index:20}
 
-/* ===== S1 HOOK ===== */
-.s1{background:var(--ink)}
-.s1 .vignette{background:radial-gradient(ellipse 80% 60% at 50% 30%,rgba(201,168,76,.12),transparent 65%),radial-gradient(ellipse 60% 50% at 90% 100%,rgba(107,31,31,.25),transparent 60%)}
-.s1 .arch{position:absolute;z-index:1;left:50%;top:150px;transform:translateX(-50%);width:760px;height:1000px;opacity:.5}
-.s1 h1{font-size:116px;margin-top:150px;text-transform:none}
-.s1 h1 .q{color:var(--gold)}
-.s1 .nots{margin-top:64px;display:flex;flex-direction:column;gap:14px}
-.s1 .nots p{color:var(--muted);font-size:36px}
-.s1 .nots s{text-decoration-color:rgba(201,168,76,.75);text-decoration-thickness:3px}
-.s1 .but{margin-top:44px;padding-left:32px;border-left:3px solid var(--gold)}
-.s1 .but p{font-size:42px;color:var(--cream);font-weight:600;line-height:1.35}
-
-/* ===== S2 SUBUH ===== */
-.s2{background:linear-gradient(180deg,#0a1220 0%,#14203a 38%,#3a3550 62%,#9a6a48 86%,#d79f5c 100%)}
-.s2 .vignette{background:radial-gradient(ellipse 70% 30% at 50% 100%,rgba(240,200,120,.45),transparent 70%)}
-.s2 .stars{position:absolute;inset:0;z-index:1;background-image:radial-gradient(1.6px 1.6px at 12% 14%,#fff8,transparent),radial-gradient(1.4px 1.4px at 28% 22%,#fff6,transparent),radial-gradient(2px 2px at 64% 12%,#fff9,transparent),radial-gradient(1.4px 1.4px at 82% 26%,#fff6,transparent),radial-gradient(1.6px 1.6px at 46% 30%,#fff5,transparent),radial-gradient(1.2px 1.2px at 90% 8%,#fff7,transparent),radial-gradient(1.2px 1.2px at 6% 34%,#fff5,transparent)}
-.s2 .crescent{position:absolute;z-index:1;right:110px;top:160px;width:70px;height:70px;border-radius:50%;box-shadow:-14px 8px 0 0 var(--gold-p);transform:rotate(-20deg);opacity:.9}
-.s2 h1{font-size:104px;margin-top:100px}
-.s2 .body{margin-top:56px;display:flex;flex-direction:column;gap:10px}
-.s2 .body p{font-size:38px}
-.s2 .days{margin-top:48px;display:grid;grid-template-columns:repeat(10,1fr);gap:14px;max-width:660px}
-.s2 .days i{display:block;aspect-ratio:1;border-radius:50%;border:2px solid rgba(240,220,160,.7);background:rgba(240,220,160,.12)}
-.s2 .days i.f{background:var(--gold-p);border-color:var(--gold-p)}
-.s2 .dlabel{margin-top:18px;font-size:20px;letter-spacing:4px;text-transform:uppercase;font-weight:700;color:var(--gold-p);opacity:.9}
-.s2 .end{margin-top:34px;font-family:var(--serif);font-style:italic;font-size:46px;color:var(--cream);font-weight:500}
-.s2 .skyline{position:absolute;left:0;width:100%;bottom:118px;height:110px;z-index:1}
-.s2 .ground{position:absolute;left:0;right:0;bottom:0;height:120px;background:#17110c;z-index:1}
-.s2 .top,.s2 .bottom{color:var(--gold-p)}
-
-/* ===== S3 RUMAH ===== */
-.s3{background:var(--cream);color:var(--ink)}
-.s3 .pattern{opacity:.09}
-.s3 .vignette{background:radial-gradient(ellipse 70% 50% at 100% 0%,rgba(201,168,76,.22),transparent 65%)}
-.s3 .top,.s3 .bottom{color:var(--maroon)}
-.s3 h1{font-size:100px;margin-top:80px;color:var(--ink)}
-.s3 h1 em{color:var(--maroon)}
-.s3 .lead{margin-top:36px;font-size:38px;color:#5a4d2e;font-weight:600}
-.s3 ul{list-style:none;margin-top:30px;display:flex;flex-direction:column}
-.s3 li{display:flex;gap:30px;align-items:baseline;padding:20px 0;border-bottom:1.5px solid rgba(107,31,31,.18);font-size:37px;font-weight:500;line-height:1.35}
-.s3 li b{font-family:var(--serif);font-style:italic;font-size:44px;color:var(--gold-d);min-width:56px;font-weight:600}
-.s3 .closing{margin-top:40px;font-family:var(--serif);font-size:58px;line-height:1.1;font-weight:600}
-.s3 .closing em{color:var(--maroon);font-style:italic}
-
-/* ===== S4 WAKTU ===== */
-.s4{background:var(--teal-d)}
-.s4 .vignette{background:radial-gradient(ellipse 80% 60% at 0% 100%,rgba(42,96,88,.55),transparent 65%),radial-gradient(ellipse 60% 40% at 100% 0%,rgba(201,168,76,.12),transparent 60%)}
-.s4 .big30{position:absolute;z-index:1;right:-40px;top:120px;font-family:var(--serif);font-size:720px;line-height:.8;font-weight:700;color:transparent;-webkit-text-stroke:2px rgba(201,168,76,.10)}
-.s4 h1{font-size:96px;margin-top:80px;max-width:860px}
-.s4 .vs{margin-top:52px;display:flex;flex-direction:column;gap:6px}
-.s4 .vs p{font-size:38px}
-.s4 .vs .dim{color:var(--muted);text-decoration:line-through;text-decoration-color:rgba(201,168,76,.6);text-decoration-thickness:2px}
-.s4 .vs .hi{color:var(--gold-b);font-weight:700}
-.s4 .cards{margin-top:52px;display:grid;grid-template-columns:1fr 1fr;gap:28px}
-.s4 .card{border:1.5px solid rgba(201,168,76,.4);background:rgba(13,12,9,.35);border-radius:22px;padding:34px 34px 36px}
-.s4 .card .ar{font-family:var(--ar);font-size:56px;color:var(--gold-b);line-height:1;direction:rtl;text-align:right}
-.s4 .card h3{margin-top:22px;font-size:34px;font-weight:800;letter-spacing:.5px}
-.s4 .card p{margin-top:10px;font-size:27px;color:#cfc5a6;line-height:1.4}
-.s4 .quote{margin-top:52px;font-family:var(--serif);font-style:italic;font-size:46px;line-height:1.18;font-weight:500;color:var(--cream)}
-.s4 .quote em{color:var(--gold-b)}
-
-/* ===== S5 SIRAH ===== */
-.s5{background:var(--maroon-d)}
-.s5 .vignette{background:radial-gradient(ellipse 90% 60% at 50% 0%,rgba(155,48,48,.45),transparent 65%),radial-gradient(ellipse 70% 40% at 50% 100%,rgba(0,0,0,.5),transparent 70%)}
-.s5 .mountain{position:absolute;z-index:1;left:0;width:100%;bottom:0;height:420px;opacity:.55}
-.s5 h1{font-size:88px;margin-top:70px}
-.s5 .tl{margin-top:44px;position:relative;padding-left:58px}
-.s5 .tl::before{content:'';position:absolute;left:12px;top:18px;bottom:30px;width:2px;background:linear-gradient(180deg,var(--gold),rgba(201,168,76,.15))}
-.s5 .item{position:relative;padding-bottom:22px}
-.s5 .item::before{content:'';position:absolute;left:-58px;top:12px;width:26px;height:26px;border-radius:50%;background:var(--maroon-d);border:3px solid var(--gold)}
-.s5 .item .k{font-size:19px;letter-spacing:4px;text-transform:uppercase;font-weight:800;color:var(--gold)}
-.s5 .item p{font-size:33px;margin-top:4px;line-height:1.35}
-.s5 .closing{margin-top:14px;padding:24px 36px;border:1.5px solid rgba(201,168,76,.45);border-radius:20px;background:rgba(13,12,9,.35)}
-.s5 .closing p{font-family:var(--serif);font-size:42px;line-height:1.15;font-weight:600}
-.s5 .closing s{color:var(--muted);text-decoration-thickness:2px;text-decoration-color:var(--gold)}
-.s5 .closing em{color:var(--gold-b)}
-
-/* ===== S6 REVEAL ===== */
-.s6{background:linear-gradient(170deg,#f7efd8 0%,#efe0b8 100%);color:var(--ink)}
-.s6 .pattern{opacity:.12}
-.s6 .vignette{background:radial-gradient(ellipse 70% 50% at 50% 35%,rgba(255,255,255,.55),transparent 70%)}
-.s6 .top,.s6 .bottom{color:var(--maroon)}
-.s6 .pre{margin-top:64px;font-family:var(--serif);font-size:58px;line-height:1.08;font-weight:600;text-align:center}
-.s6 .pre em{font-style:italic;color:var(--maroon)}
-.s6 .intro{margin-top:34px;text-align:center;font-size:20px;letter-spacing:8px;text-transform:uppercase;font-weight:800;color:var(--gold-d)}
-.s6 .logo{margin:14px auto 0;text-align:center}
-.s6 .logo .uim{font-family:var(--serif);font-size:200px;font-weight:700;line-height:.9;color:var(--maroon);letter-spacing:6px}
-.s6 .logo .full{margin-top:10px;font-size:30px;letter-spacing:9px;text-transform:uppercase;font-weight:800}
-.s6 .badges{margin-top:30px;display:flex;justify-content:center;gap:16px}
-.s6 .badge{padding:14px 28px;border-radius:100px;font-size:25px;font-weight:700}
-.s6 .badge.solid{background:var(--maroon);color:var(--cream)}
-.s6 .badge.line{border:2px solid var(--maroon);color:var(--maroon)}
-.s6 .desc{margin-top:28px;text-align:center;font-size:28px;line-height:1.45;color:#5a4d2e;font-weight:500;padding:0 30px}
-.s6 .pillars{margin-top:34px;display:grid;grid-template-columns:repeat(5,1fr);gap:14px}
-.s6 .pill{background:var(--ink);color:var(--cream);border-radius:18px;padding:26px 10px 24px;text-align:center}
-.s6 .pill .ic{width:46px;height:46px;margin:0 auto 14px;display:block}
-.s6 .pill span{display:block;font-size:21px;font-weight:700;line-height:1.25}
-.s6 .closing{margin-top:30px;text-align:center;font-family:var(--serif);font-size:40px;line-height:1.15;font-weight:600}
-.s6 .closing em{color:var(--maroon);font-style:italic}
-
-/* ===== S7 CTA ===== */
-.s7{background:var(--ink)}
-.s7 .vignette{background:radial-gradient(ellipse 80% 55% at 50% 0%,rgba(201,168,76,.16),transparent 65%),radial-gradient(ellipse 60% 40% at 0% 100%,rgba(107,31,31,.3),transparent 60%)}
-.s7 h1{font-size:82px;margin-top:64px}
-.s7 .ticket{margin-top:46px;border:1.5px solid rgba(201,168,76,.5);border-radius:26px;overflow:hidden;background:rgba(30,27,20,.7)}
-.s7 .ticket .head{padding:24px 36px;background:linear-gradient(90deg,#3a2e12,#6B5620,#3a2e12);font-size:24px;letter-spacing:6px;font-weight:800;text-transform:uppercase;color:var(--gold-p)}
-.s7 .ticket .grid{display:grid;grid-template-columns:1fr 1fr;}
-.s7 .ticket .cell{padding:26px 36px;border-top:1px solid rgba(201,168,76,.18)}
-.s7 .ticket .cell:nth-child(odd){border-right:1px solid rgba(201,168,76,.18)}
-.s7 .ticket .lbl{font-size:18px;letter-spacing:4px;text-transform:uppercase;font-weight:700;color:var(--muted)}
-.s7 .ticket .val{margin-top:6px;font-family:var(--serif);font-size:48px;font-weight:700;color:var(--cream);line-height:1.05}
-.s7 .ticket .val small{font-family:var(--sans);font-size:22px;font-weight:600;color:var(--muted)}
-.s7 .ticket .val.gold{color:var(--gold-b)}
-.s7 .ask{margin-top:42px;font-size:33px;line-height:1.4;color:#d9cfb0}
-.s7 .dm{margin-top:28px;display:flex;align-items:center;gap:26px;padding:28px 36px;border-radius:24px;background:linear-gradient(90deg,#C9A84C,#E8C96A);color:var(--ink)}
-.s7 .dm svg{width:62px;height:62px;flex-shrink:0}
-.s7 .dm p{font-size:28px;font-weight:600;line-height:1.3}
-.s7 .dm b{font-weight:800;font-size:40px;letter-spacing:2px}
-.s7 .url{position:absolute;left:0;right:0;bottom:62px;text-align:center;font-size:30px;letter-spacing:8px;font-weight:800;color:var(--gold);z-index:3}
+.content{position:absolute;inset:0;z-index:10;padding:0 84px;display:flex;flex-direction:column;align-items:center}
+.credit{margin-top:96px;display:flex;align-items:center;gap:14px;font-size:17px;font-weight:700;letter-spacing:3px;color:rgba(238,232,218,.85)}
+.credit .mk{width:30px;height:30px;border:2px solid var(--y);border-radius:7px;display:grid;place-items:center;color:var(--y);font-size:16px;font-weight:900}
+.credit b{color:var(--y);font-weight:900}
+.stage{flex:1;width:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding-bottom:20px}
+.row{display:flex;gap:30px;align-items:stretch;width:100%;justify-content:center}
+.main{display:flex;flex-direction:column;align-items:stretch}
+.head{position:relative;display:flex;flex-direction:column;align-items:stretch}
+.fit{display:block;white-space:nowrap;font-family:'Archivo',sans-serif;font-stretch:125%;font-weight:900;line-height:.86;text-transform:uppercase;letter-spacing:-1px;text-align:center}
+.fit>span{display:inline-block}
+.paper{background-image:var(--paper);background-size:900px 520px;-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 8px 10px rgba(0,0,0,.55))}
+.gold{background-image:linear-gradient(var(--y),var(--y)),var(--paper);background-blend-mode:multiply;background-size:900px 520px;-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 8px 10px rgba(0,0,0,.55))}
+.outl{color:transparent;-webkit-text-stroke:5px var(--y)}
+.gap{height:14px}
+.sticker{align-self:center;position:relative;z-index:3;margin:-4px 0 0;transform:rotate(-3deg);background:var(--y);color:#141407;font-weight:800;font-size:25px;letter-spacing:.5px;padding:9px 22px;border-radius:9px;border:2.5px solid #fff3a6;box-shadow:0 10px 24px rgba(0,0,0,.5);white-space:nowrap;text-transform:uppercase}
+.sticker.top{margin:0 0 26px}
+.sel{position:relative;margin-top:44px;border:2px solid var(--line);padding:22px 30px;font-weight:800;font-size:29px;line-height:1.32;text-transform:uppercase;letter-spacing:.5px;text-align:left;background:rgba(0,0,0,.18)}
+.sel em{font-style:normal;color:var(--y)}
+.sel::before,.sel::after,.sel .h1,.sel .h2{content:'';position:absolute;width:16px;height:16px;background:#a9a69a;border:2px solid #57554c;border-radius:2px}
+.sel::before{left:-9px;top:-9px}.sel::after{right:-9px;top:-9px}.sel .h1{left:-9px;bottom:-9px}.sel .h2{right:-9px;bottom:-9px}
+.sel .cur{position:absolute;right:-34px;bottom:-40px;width:34px;height:40px}
+.next{width:84px;height:84px;border:3.5px solid rgba(238,232,218,.85);border-radius:20px;display:grid;place-items:center;margin-bottom:84px;flex-shrink:0}
+.next svg{width:40px;height:40px}
+/* toolbar */
+.tools{flex-shrink:0;width:112px;background:var(--panel);border:2px solid var(--line);display:flex;flex-direction:column;justify-content:space-around;padding:14px 0}
+.tools .t{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 0;border-bottom:1px solid rgba(233,196,43,.18)}
+.tools .t:last-child{border-bottom:0}
+.tools svg{width:42px;height:42px;flex-shrink:0}
+.tools span{writing-mode:vertical-rl;font-size:15px;font-weight:600;letter-spacing:1px;color:rgba(238,232,218,.75)}
+/* panels */
+.panel{background:var(--panel);border:2px solid var(--line);margin-top:40px;width:100%}
+.panel .ph{display:flex;justify-content:space-between;padding:12px 22px;border-bottom:1px solid rgba(233,196,43,.25);font-size:16px;font-weight:700;letter-spacing:3px;color:rgba(238,232,218,.6);text-transform:uppercase}
+.panel .ph b{color:var(--y)}
+.li{display:flex;align-items:center;gap:20px;padding:15px 22px;border-bottom:1px solid rgba(238,232,218,.08);font-size:28px;font-weight:700;text-transform:uppercase}
+.li:last-child{border-bottom:0}
+.li .ck{width:34px;height:34px;border-radius:7px;background:var(--y);display:grid;place-items:center;flex-shrink:0}
+.li .ck svg{width:22px;height:22px}
+.li .k{color:var(--y);font-weight:900;min-width:180px;letter-spacing:1px}
+.li .d{font-weight:600;font-size:25px;text-transform:none;color:rgba(238,232,218,.9)}
+/* timeline */
+.tl{margin-top:40px;width:100%;background:var(--panel);border:2px solid var(--line);padding:18px 24px 20px}
+.tl .ph{display:flex;justify-content:space-between;font-size:16px;font-weight:700;letter-spacing:3px;color:rgba(238,232,218,.6);margin-bottom:14px}
+.tl .ph b{color:var(--y)}
+.tl .track{position:relative;display:grid;grid-template-columns:repeat(30,1fr);gap:5px;height:52px}
+.tl .track i{background:rgba(238,232,218,.12);border-radius:3px}
+.tl .track i.on{background:var(--y)}
+.tl .ph2{display:flex;justify-content:space-between;margin-top:10px;font-size:16px;font-weight:800;letter-spacing:2px;color:rgba(238,232,218,.7)}
+/* cards */
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin-top:40px;width:100%}
+.card{background:var(--panel);border:2px solid var(--line);padding:22px 26px}
+.card .ar{font-family:'Amiri',serif;font-size:46px;color:var(--y);line-height:1.1;text-align:right}
+.card h3{font-family:'Archivo';font-stretch:125%;font-weight:900;font-size:36px;text-transform:uppercase;margin-top:6px}
+.card p{font-size:24px;font-weight:600;margin-top:6px;color:rgba(238,232,218,.85)}
+/* chips */
+.chips{display:flex;gap:16px;justify-content:center;margin-top:26px}
+.chip{padding:12px 24px;border:2.5px solid var(--y);font-weight:800;font-size:25px;text-transform:uppercase;letter-spacing:1px}
+.chip.f{background:var(--y);color:#141407}
+/* info grid */
+.info{display:grid;grid-template-columns:1fr 1fr;width:100%;margin-top:34px;background:var(--panel);border:2px solid var(--line)}
+.info .c{padding:16px 24px;border-bottom:1px solid rgba(233,196,43,.2)}
+.info .c:nth-child(odd){border-right:1px solid rgba(233,196,43,.2)}
+.info .c:nth-last-child(-n+2){border-bottom:0}
+.info .l{font-size:15px;font-weight:700;letter-spacing:3px;color:rgba(238,232,218,.6);text-transform:uppercase}
+.info .v{font-family:'Archivo';font-stretch:115%;font-weight:900;font-size:36px;text-transform:uppercase;margin-top:4px}
+.info .v.y{color:var(--y)}
+.info .v small{font-family:'Montserrat';font-size:18px;font-weight:700;color:rgba(238,232,218,.7)}
+.cta{position:relative;margin-top:34px;display:flex;align-items:center;gap:22px}
+.cta .btn{background:var(--y);color:#141407;padding:22px 40px;border-radius:16px;font-family:'Archivo';font-stretch:125%;font-weight:900;font-size:46px;box-shadow:0 12px 30px rgba(0,0,0,.5),inset 0 -5px 0 rgba(0,0,0,.18)}
+.cta .txt{font-size:25px;font-weight:700;line-height:1.3;text-transform:uppercase}
+.cta .cur{position:absolute;left:330px;top:70px;width:42px;height:50px}
+.url{margin-bottom:96px;font-family:'Archivo';font-stretch:125%;font-weight:900;font-size:30px;letter-spacing:6px;color:var(--y)}
 </style>
 </head>
 <body>
 
-<!-- ================= SLIDE 1 ================= -->
-<section class="slide s1" id="s1">
-  <div class="pattern"></div><div class="vignette"></div>
-  <svg class="arch" viewBox="0 0 760 1000" fill="none">
-    <path d="M30 1000 V430 C30 210 200 70 380 10 C560 70 730 210 730 430 V1000" stroke="#C9A84C" stroke-width="2"/>
-    <path d="M70 1000 V440 C70 240 220 112 380 58 C540 112 690 240 690 440 V1000" stroke="#C9A84C" stroke-opacity=".45" stroke-width="1.5"/>
-  </svg>
-  <div class="top"><div>Sebulan di Madinah</div><div class="num">01<span> / 07</span></div></div>
-  <h1>Pernah kebayang nggak, tinggal <em>sebulan</em> di&nbsp;Madinah<span class="q">?</span></h1>
-  <div class="nots">
-    <p>Bukan <s>datang 3 hari.</s></p>
-    <p>Bukan <s>sekadar ziarah, foto, lalu pulang.</s></p>
-  </div>
-  <div class="but"><p>Tapi benar-benar menjalani hari-hari di kota Rasulullah <span class="saw">ﷺ</span>.</p></div>
-  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
-</section>
+<!-- reusable svg defs -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="arrow" viewBox="0 0 40 40"><path d="M6 20h26M22 9l11 11-11 11" fill="none" stroke="#EEE8DA" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="cursor" viewBox="0 0 34 40"><path d="M2 2l30 20-13 3 7 12-6 3-7-12-9 9z" fill="#E9C42B" stroke="#141407" stroke-width="2" stroke-linejoin="round"/></symbol>
+    <symbol id="check" viewBox="0 0 22 22"><path d="M4 11l5 5 9-10" fill="none" stroke="#141407" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-masjid" viewBox="0 0 48 48"><g fill="none" stroke="#EEE8DA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M10 42V28c0-7 6-12 14-14 8 2 14 7 14 14v14"/><path d="M24 14V7M19 42v-8a5 5 0 0 1 10 0v8M4 42h40M42 42V18M42 18l-2-4h4z"/></g></symbol>
+    <symbol id="i-book" viewBox="0 0 48 48"><path d="M24 12c-5-4-12-4-18-2v26c6-2 13-2 18 2 5-4 12-4 18-2V10c-6-2-13-2-18 2zM24 12v26" fill="none" stroke="#EEE8DA" stroke-width="3" stroke-linejoin="round"/></symbol>
+    <symbol id="i-pen" viewBox="0 0 48 48"><g fill="none" stroke="#EEE8DA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M34 6l8 8-24 24-10 2 2-10z"/><path d="M28 12l8 8"/></g></symbol>
+    <symbol id="i-chat" viewBox="0 0 48 48"><g fill="none" stroke="#EEE8DA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9h36v24H22l-9 7v-7H6z"/></g><text x="24" y="27" text-anchor="middle" font-family="Amiri" font-size="18" fill="#E9C42B">ع</text></symbol>
+    <symbol id="i-mount" viewBox="0 0 48 48"><g fill="none" stroke="#EEE8DA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M3 40l13-20 8 10 6-8 15 18z"/><circle cx="35" cy="11" r="4"/></g></symbol>
+    <symbol id="i-horse" viewBox="0 0 48 48"><g fill="none" stroke="#EEE8DA" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M14 43V31c-4-2-7-7-4-11l8-12 6 2 4-4 2 6c6 2 10 8 10 15v16"/><path d="M10 25l7 2"/></g><circle cx="21" cy="16" r="1.8" fill="#EEE8DA"/></symbol>
+  </defs>
+</svg>
 
-<!-- ================= SLIDE 2 ================= -->
-<section class="slide s2" id="s2">
-  <div class="stars"></div><div class="ground"></div><div class="crescent"></div><div class="vignette"></div>
-  <svg class="skyline" viewBox="0 0 1080 260" preserveAspectRatio="none" fill="#17110c">
-    <path d="M0 262V200h120v-30h60v30h80v-50h40v50h70V120l6-60 6 60v80h60v-40c0-30 40-58 80-58s80 28 80 58v40h60V120l6-60 6 60v80h80v-40h60v40h100v-30h80v30h100v62z"/>
-  </svg>
-  <div class="top"><div>Sebulan di Madinah</div><div class="num">02<span> / 07</span></div></div>
-  <h1>Bangun tidur, nggak perlu <em>buru-buru.</em></h1>
-  <div class="body">
-    <p>Subuh di Masjid Nabawi.</p>
-    <p>Selesai shalat, masih punya waktu untuk duduk membaca Al-Qur'an.</p>
-  </div>
-  <div class="days">
-    <i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-    <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
-  </div>
-  <div class="dlabel">Hari ini · Besok · Lusa · … · Hari ke-30</div>
-  <div class="end">Begitu terus, selama sebulan.<br/>Nggak sedang dikejar jadwal pindah hotel.</div>
-  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
-</section>
-
-<!-- ================= SLIDE 3 ================= -->
-<section class="slide s3" id="s3">
-  <div class="pattern"></div><div class="vignette"></div>
-  <div class="top"><div>Sebulan di Madinah</div><div class="num">03<span> / 07</span></div></div>
-  <h1>Madinah bukan lagi sekadar <em>destinasi.</em></h1>
-  <p class="lead">Bayangkan…</p>
-  <ul>
-    <li><b>i.</b><span>Mulai hafal jalan menuju masjid.</span></li>
-    <li><b>ii.</b><span>Punya tempat favorit untuk duduk membaca Al-Qur'an.</span></li>
-    <li><b>iii.</b><span>Menemukan warung langganan.</span></li>
-    <li><b>iv.</b><span>Mengenali ritme kehidupan di sekitar Masjid Nabawi.</span></li>
-  </ul>
-  <div class="closing">Pelan-pelan, Madinah terasa seperti <em>rumah kedua.</em></div>
-  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
-</section>
-
-<!-- ================= SLIDE 4 ================= -->
-<section class="slide s4" id="s4">
-  <div class="pattern"></div><div class="vignette"></div>
-  <div class="big30">30</div>
-  <div class="top"><div>Sebulan di Madinah</div><div class="num">04<span> / 07</span></div></div>
-  <h1>Kalau punya waktu sebulan, mau dipakai <em>buat apa?</em></h1>
-  <div class="vs">
-    <p class="dim">Bukan sekadar memperbanyak jumlah ibadah.</p>
-    <p class="hi">Tapi juga memperbaiki kualitasnya.</p>
-  </div>
-  <div class="cards">
-    <div class="card"><div class="ar">تَحْسِين</div><h3>Belajar Tahsin</h3><p>Agar bacaan Al-Qur'an semakin baik.</p></div>
-    <div class="card"><div class="ar">العَرَبِيَّة</div><h3>Belajar Bahasa Arab</h3><p>Agar sedikit demi sedikit memahami apa yang dibaca.</p></div>
-  </div>
-  <div class="quote">Karena perjalanan terbaik bukan cuma mengubah lokasi, tapi juga <em>memperbaiki diri.</em></div>
-  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
-</section>
-
-<!-- ================= SLIDE 5 ================= -->
-<section class="slide s5" id="s5">
-  <div class="pattern"></div><div class="vignette"></div>
-  <svg class="mountain" viewBox="0 0 1080 420" preserveAspectRatio="none" fill="#0d0c09">
-    <path d="M0 420V300l90-60 70 30 110-120 80 70 90-110 120 120 70-40 110 110 90-70 120 90 130-50v150z" opacity=".7"/>
-  </svg>
-  <div class="top"><div>Sebulan di Madinah</div><div class="num">05<span> / 07</span></div></div>
-  <h1>Belajar sirah, langsung di kota tempat <em>kisah itu terjadi.</em></h1>
-  <div class="tl">
-    <div class="item"><div class="k">Uhud</div><p>Belajar tentang Uhud, lalu mengunjungi kawasan Uhud.</p></div>
-    <div class="item"><div class="k">Hijrah</div><p>Mempelajari perjalanan hijrah Rasulullah <span class="saw">ﷺ</span>.</p></div>
-    <div class="item"><div class="k">Para Sahabat</div><p>Memahami kisah para sahabat di tempat-tempat yang berkaitan dengan kehidupan mereka.</p></div>
-    <div class="item"><div class="k">Berkuda</div><p>Bahkan mencoba pengalaman berkuda.</p></div>
-  </div>
-  <div class="closing"><p>Bukan <s>sekadar city tour.</s><br/>Tapi perjalanan yang <em>penuh pelajaran.</em></p></div>
-  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
-</section>
-
-<!-- ================= SLIDE 6 ================= -->
-<section class="slide s6" id="s6">
-  <div class="pattern"></div><div class="vignette"></div>
-  <div class="top"><div>Sebulan di Madinah</div><div class="num">06<span> / 07</span></div></div>
-  <div class="pre">Kami ingin mengajakmu tinggal <em>lebih lama</em> di Madinah.</div>
-  <div class="intro">— Memperkenalkan —</div>
-  <div class="logo"><div class="uim">UIM</div><div class="full">Umroh Intensive Program</div></div>
-  <div class="badges"><div class="badge solid">40 Hari Perjalanan</div><div class="badge line">± Sebulan di Madinah</div></div>
-  <div class="desc">Dengan konsep belajar dan beribadah, termasuk kesempatan menghabiskan sekitar sebulan di Madinah.</div>
-  <div class="pillars">
-    <div class="pill"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="#E8C96A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M24 12c-5-4-12-4-18-2v26c6-2 13-2 18 2 5-4 12-4 18-2V10c-6-2-13-2-18 2zM24 12v26"/></svg><span>Tahsin<br/>Al-Qur'an</span></div>
-    <div class="pill"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="#E8C96A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 10h32v22H22l-8 7v-7H8z"/><path d="M30 18c-2 6-8 8-12 6M18 18h.01"/></svg><span>Bahasa Arab</span></div>
-    <div class="pill"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="#E8C96A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 40l12-18 8 10 6-8 14 16z"/><circle cx="34" cy="12" r="4"/></svg><span>Sirah Nabawiyah</span></div>
-    <div class="pill"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="#E8C96A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 42V30c-4-2-6-6-4-10l8-12 6 2 4-4 2 6c6 2 10 8 10 14v16"/><path d="M22 18h.01M10 24l6 2"/></svg><span>Pengalaman Berkuda</span></div>
-    <div class="pill"><svg class="ic" viewBox="0 0 48 48" fill="none" stroke="#E8C96A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M8 42V26c0-8 7-14 16-16 9 2 16 8 16 16v16"/><path d="M24 10V4M18 42V32a6 6 0 0 1 12 0v10M4 42h40"/></svg><span>Ibadah di<br/>Masjid Nabawi</span></div>
-  </div>
-  <div class="closing">Bukan sekadar umroh yang lebih panjang.<br/>Tapi perjalanan yang ingin kita bawa<br/><em>manfaatnya sampai pulang.</em></div>
-  <div class="bottom"><div>mudahkebaitullah.id</div><div class="swipe">Geser <svg viewBox="0 0 56 16" fill="none"><path d="M0 8h52M45 1l7 7-7 7" stroke="currentColor" stroke-width="2"/></svg></div></div>
-</section>
-
-<!-- ================= SLIDE 7 ================= -->
-<section class="slide s7" id="s7">
-  <div class="pattern"></div><div class="vignette"></div>
-  <div class="top"><div>Sebulan di Madinah</div><div class="num">07<span> / 07</span></div></div>
-  <h1>Sebulan di Madinah. Mungkin ini kesempatan yang <em>selama ini kamu tunggu.</em></h1>
-  <div class="ticket">
-    <div class="head">Umroh Intensive Program 2027</div>
-    <div class="grid">
-      <div class="cell"><div class="lbl">Start Jakarta</div><div class="val">20 Juni 2027</div></div>
-      <div class="cell"><div class="lbl">Total Perjalanan</div><div class="val">40 Hari</div></div>
-      <div class="cell"><div class="lbl">Mulai</div><div class="val gold">Rp39,9 jt <small>/orang · Quad</small></div></div>
-      <div class="cell"><div class="lbl">Usia 10–20 Tahun</div><div class="val">Diskon <span style="color:var(--gold-b)">Rp2 jt</span></div></div>
+<!-- ============ 1 ============ -->
+<section class="slide" id="s1">
+  <div class="layer blot"></div><div class="ghost" style="right:-120px;top:20px">30</div><div class="layer specks"></div><div class="layer fold"></div><div class="layer leak"><i style="width:700px;height:700px;left:-480px;top:700px"></i><i style="width:520px;height:520px;right:-380px;top:-160px"></i></div><div class="layer grain"></div><div class="layer vig"></div>
+  <svg class="beads" data-from="-80,250" data-c="120,40" data-to="440,-90"></svg>
+  <svg class="beads" data-from="-60,1150" data-c="250,1300" data-to="560,1420"></svg>
+  <div class="content">
+    <div class="credit"><div class="mk">M</div>PRESENTED BY <b>MUDAHKEBAITULLAH.ID</b></div>
+    <div class="stage">
+      <div class="row">
+        <div class="tools">
+          <div class="t"><svg><use href="#i-masjid"/></svg><span>nabawi</span></div>
+          <div class="t"><svg><use href="#i-book"/></svg><span>tilawah</span></div>
+          <div class="t"><svg><use href="#i-pen"/></svg><span>tahsin</span></div>
+          <div class="t"><svg><use href="#i-chat"/></svg><span>arab</span></div>
+          <div class="t"><svg><use href="#i-mount"/></svg><span>sirah</span></div>
+          <div class="t"><svg><use href="#i-horse"/></svg><span>berkuda</span></div>
+        </div>
+        <div class="main" style="width:700px">
+          <div class="head">
+            <div class="fit paper" data-max="190"><span>TINGGAL</span></div>
+            <div class="sticker">Bukan cuma 3 hari!</div>
+            <div class="fit paper" data-max="190"><span>SEBULAN</span></div>
+            <div class="gap"></div>
+            <div class="fit gold" data-max="140"><span>DI MADINAH</span></div>
+          </div>
+          <div class="sel"><i class="h1"></i><i class="h2"></i>Bukan mampir, foto, lalu pulang. <em>Tapi benar-benar hidup di kota Rasulullah <span class="saw">ﷺ</span>.</em><svg class="cur"><use href="#cursor"/></svg></div>
+        </div>
+      </div>
     </div>
+    <div class="next"><svg><use href="#arrow"/></svg></div>
   </div>
-  <p class="ask">Ingin tahu bagaimana konsep tinggal, belajar, dan beribadah selama sebulan di Madinah?</p>
-  <div class="dm">
-    <svg viewBox="0 0 48 48" fill="none" stroke="#0d0c09" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M44 4L22 26M44 4L30 44l-8-18-18-8z"/></svg>
-    <p>DM <b>“MADINAH”</b><br/>untuk mendapatkan itinerary &amp; informasi lengkap.</p>
-  </div>
-  <div class="url">MUDAHKEBAITULLAH.ID</div>
 </section>
 
+<!-- ============ 2 ============ -->
+<section class="slide v2" id="s2">
+  <div class="layer blot"></div><div class="ghost" style="left:-140px;top:640px">05</div><div class="layer specks"></div><div class="layer fold"></div><div class="layer leak"><i style="width:620px;height:620px;right:-440px;top:760px"></i></div><div class="layer grain"></div><div class="layer vig"></div>
+  <svg class="beads" data-from="1160,330" data-c="980,120" data-to="720,-90"></svg>
+  <div class="content">
+    <div class="credit"><div class="mk">M</div>PRESENTED BY <b>MUDAHKEBAITULLAH.ID</b></div>
+    <div class="stage">
+      <div class="main" style="width:820px">
+        <div class="sticker top">Setiap pagi, selama 30 hari</div>
+        <div class="head">
+          <div class="fit paper" data-max="200"><span>SUBUH</span></div>
+          <div class="gap"></div>
+          <div class="fit paper" data-max="200"><span>TANPA</span></div>
+          <div class="gap"></div>
+          <div class="fit gold" data-max="160"><span>BURU-BURU</span></div>
+        </div>
+        <div class="tl">
+          <div class="ph"><span>TIMELINE · MADINAH</span><b>● HARI 3 / 30</b></div>
+          <div class="track"></div>
+          <div class="ph2"><span>HARI 1</span><span>HARI 30</span></div>
+        </div>
+        <div class="sel"><i class="h1"></i><i class="h2"></i>Shalat di Nabawi, lanjut tilawah. Besok ulangi. <em>Tanpa dikejar jadwal pindah hotel.</em><svg class="cur"><use href="#cursor"/></svg></div>
+      </div>
+    </div>
+    <div class="next"><svg><use href="#arrow"/></svg></div>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="slide v3" id="s3">
+  <div class="layer blot"></div><div class="layer specks"></div><div class="layer fold"></div><div class="layer leak"><i style="width:640px;height:640px;left:-460px;top:-140px"></i></div><div class="layer grain"></div><div class="layer vig"></div>
+  <svg class="beads" data-from="1150,1100" data-c="820,1290" data-to="460,1440"></svg>
+  <div class="content">
+    <div class="credit"><div class="mk">M</div>PRESENTED BY <b>MUDAHKEBAITULLAH.ID</b></div>
+    <div class="stage">
+      <div class="main" style="width:860px">
+        <div class="head">
+          <div class="fit paper" data-max="190"><span>MADINAH</span></div>
+          <div class="sticker">Bukan sekadar destinasi</div>
+          <div class="fit paper" data-max="190"><span>JADI RUMAH</span></div>
+          <div class="gap"></div>
+          <div class="fit gold" data-max="190"><span>KEDUA</span></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><span>Checklist · Sebulan</span><b>4/4</b></div>
+          <div class="li"><div class="ck"><svg><use href="#check"/></svg></div>Hafal jalan ke masjid</div>
+          <div class="li"><div class="ck"><svg><use href="#check"/></svg></div>Punya spot tilawah favorit</div>
+          <div class="li"><div class="ck"><svg><use href="#check"/></svg></div>Punya warung langganan</div>
+          <div class="li"><div class="ck"><svg><use href="#check"/></svg></div><span>Kenal ritme kota Nabi <span class="saw">ﷺ</span></span></div>
+        </div>
+      </div>
+    </div>
+    <div class="next"><svg><use href="#arrow"/></svg></div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="slide" id="s4">
+  <div class="layer blot"></div><div class="ghost" style="right:-90px;top:120px">30</div><div class="layer specks"></div><div class="layer fold"></div><div class="layer leak"><i style="width:660px;height:660px;left:-480px;top:820px"></i></div><div class="layer grain"></div><div class="layer vig"></div>
+  <svg class="beads" data-from="-80,250" data-c="120,40" data-to="440,-90"></svg>
+  <div class="content">
+    <div class="credit"><div class="mk">M</div>PRESENTED BY <b>MUDAHKEBAITULLAH.ID</b></div>
+    <div class="stage">
+      <div class="main" style="width:860px">
+        <div class="head">
+          <div class="fit paper" data-max="190"><span>SEBULAN,</span></div>
+          <div class="sticker">Kualitas &gt; kuantitas</div>
+          <div class="fit gold" data-max="190"><span>BUAT APA?</span></div>
+        </div>
+        <div class="cards">
+          <div class="card"><div class="ar">تَحْسِين</div><h3>Tahsin</h3><p>Bacaan Qur'an makin benar.</p></div>
+          <div class="card"><div class="ar">العَرَبِيَّة</div><h3>Bahasa Arab</h3><p>Mulai paham yang dibaca.</p></div>
+        </div>
+        <div class="sel"><i class="h1"></i><i class="h2"></i>Perjalanan terbaik bukan cuma pindah lokasi. <em>Tapi memperbaiki diri.</em><svg class="cur"><use href="#cursor"/></svg></div>
+      </div>
+    </div>
+    <div class="next"><svg><use href="#arrow"/></svg></div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="slide v2" id="s5">
+  <div class="layer blot"></div><div class="layer specks"></div><div class="layer fold"></div><div class="layer leak"><i style="width:600px;height:600px;right:-420px;top:-120px"></i></div><div class="layer grain"></div><div class="layer vig"></div>
+  <svg class="beads" data-from="-80,1120" data-c="260,1300" data-to="600,1440"></svg>
+  <div class="content">
+    <div class="credit"><div class="mk">M</div>PRESENTED BY <b>MUDAHKEBAITULLAH.ID</b></div>
+    <div class="stage">
+      <div class="main" style="width:880px">
+        <div class="head">
+          <div class="fit paper" data-max="190"><span>BELAJAR</span></div>
+          <div class="gap"></div>
+          <div class="fit paper" data-max="190"><span>SIRAH</span></div>
+          <div class="sticker">Bukan city tour biasa!</div>
+          <div class="fit gold" data-max="190"><span>DI TEMPATNYA</span></div>
+        </div>
+        <div class="panel">
+          <div class="ph"><span>Layer · Sirah Nabawiyah</span><b>4 item</b></div>
+          <div class="li"><span class="k">Uhud</span><span class="d">Kaji kisahnya, lalu datangi lokasinya.</span></div>
+          <div class="li"><span class="k">Hijrah</span><span class="d">Telusuri perjalanan Rasulullah <span class="saw">ﷺ</span>.</span></div>
+          <div class="li"><span class="k">Sahabat</span><span class="d">Kisah mereka, di tempat kejadiannya.</span></div>
+          <div class="li"><span class="k">Bonus</span><span class="d">Pengalaman berkuda.</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="next"><svg><use href="#arrow"/></svg></div>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="slide v3" id="s6">
+  <div class="layer blot"></div><div class="ghost" style="right:-160px;top:560px">40</div><div class="layer specks"></div><div class="layer fold"></div><div class="layer leak"><i style="width:700px;height:700px;left:-500px;top:760px"></i><i style="width:480px;height:480px;right:-360px;top:-150px"></i></div><div class="layer grain"></div><div class="layer vig"></div>
+  <svg class="beads" data-from="-80,250" data-c="100,50" data-to="400,-90"></svg>
+  <div class="content">
+    <div class="credit"><div class="mk">M</div>PRESENTED BY <b>MUDAHKEBAITULLAH.ID</b></div>
+    <div class="stage">
+      <div class="sticker top">Memperkenalkan</div>
+      <div class="row">
+        <div class="tools">
+          <div class="t"><svg><use href="#i-pen"/></svg><span>tahsin</span></div>
+          <div class="t"><svg><use href="#i-chat"/></svg><span>arab</span></div>
+          <div class="t"><svg><use href="#i-mount"/></svg><span>sirah</span></div>
+          <div class="t"><svg><use href="#i-horse"/></svg><span>berkuda</span></div>
+          <div class="t"><svg><use href="#i-masjid"/></svg><span>nabawi</span></div>
+        </div>
+        <div class="main" style="width:700px">
+          <div class="head">
+            <div class="fit paper" data-max="330"><span>UIM</span></div>
+            <div class="gap"></div>
+            <div class="fit gold" data-max="120"><span>UMROH</span></div>
+            <div class="gap"></div>
+            <div class="fit gold" data-max="120"><span>INTENSIVE</span></div>
+            <div class="gap"></div>
+            <div class="fit gold" data-max="120"><span>PROGRAM</span></div>
+          </div>
+          <div class="chips"><div class="chip f">40 hari</div><div class="chip">± sebulan di Madinah</div></div>
+        </div>
+      </div>
+      <div class="sel" style="width:100%"><i class="h1"></i><i class="h2"></i>Bukan sekadar umroh yang lebih lama. <em>Umroh yang manfaatnya terbawa pulang.</em><svg class="cur"><use href="#cursor"/></svg></div>
+    </div>
+    <div class="next"><svg><use href="#arrow"/></svg></div>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="slide" id="s7">
+  <div class="layer blot"></div><div class="ghost" style="left:-120px;top:40px">27</div><div class="layer specks"></div><div class="layer fold"></div><div class="layer leak"><i style="width:640px;height:640px;right:-460px;top:820px"></i></div><div class="layer grain"></div><div class="layer vig"></div>
+  <svg class="beads" data-from="1160,330" data-c="980,120" data-to="720,-90"></svg>
+  <div class="content">
+    <div class="credit"><div class="mk">M</div>PRESENTED BY <b>MUDAHKEBAITULLAH.ID</b></div>
+    <div class="stage">
+      <div class="main" style="width:880px">
+        <div class="head">
+          <div class="fit paper" data-max="190"><span>SEBULAN DI</span></div>
+          <div class="sticker">Kesempatan yang kamu tunggu?</div>
+          <div class="fit paper" data-max="190"><span>MADINAH</span></div>
+          <div class="gap"></div>
+          <div class="fit gold" data-max="150"><span>JUNI 2027</span></div>
+        </div>
+        <div class="info">
+          <div class="c"><div class="l">Start Jakarta</div><div class="v">20 Juni 2027</div></div>
+          <div class="c"><div class="l">Durasi</div><div class="v">40 Hari</div></div>
+          <div class="c"><div class="l">Mulai (Quad)</div><div class="v y">Rp39,9 jt <small>/orang</small></div></div>
+          <div class="c"><div class="l">Usia 10–20 th</div><div class="v">Diskon <span style="color:var(--y)">Rp2 jt</span></div></div>
+        </div>
+        <div class="cta">
+          <div class="btn">DM “MADINAH”</div>
+          <div class="txt">Dapatkan itinerary<br/>&amp; info lengkap</div>
+          <svg class="cur"><use href="#cursor"/></svg>
+        </div>
+      </div>
+    </div>
+    <div class="url">MUDAHKEBAITULLAH.ID</div>
+  </div>
+</section>
+
+<script>
+// textures
+const enc=s=>`url("data:image/svg+xml,${encodeURIComponent(s)}")`;
+const paper=`<svg xmlns='http://www.w3.org/2000/svg' width='900' height='520'><filter id='f' x='0' y='0' width='100%' height='100%'><feTurbulence type='fractalNoise' baseFrequency='.011 .016' numOctaves='5' seed='7'/><feDiffuseLighting surfaceScale='4' lighting-color='#f1ece0' diffuseConstant='1.05'><feDistantLight azimuth='225' elevation='52'/></feDiffuseLighting></filter><rect width='100%' height='100%' filter='url(#f)'/></svg>`;
+const blot=`<svg xmlns='http://www.w3.org/2000/svg' width='1080' height='1350'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.006' numOctaves='6' seed='3'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .55  0 0 0 0 .3  0 0 0 1.4 -.45'/></filter><rect width='100%' height='100%' filter='url(#f)'/></svg>`;
+const specks=`<svg xmlns='http://www.w3.org/2000/svg' width='540' height='540'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='2' seed='11' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/><feComponentTransfer><feFuncA type='discrete' tableValues='0 0 0 0 0 0 0 0 0 1'/><feFuncR type='linear' slope='0' intercept='1'/><feFuncG type='linear' slope='0' intercept='1'/><feFuncB type='linear' slope='0' intercept='.85'/></feComponentTransfer></filter><rect width='100%' height='100%' filter='url(#f)'/></svg>`;
+const grain=`<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(#f)'/></svg>`;
+const r=document.documentElement.style;
+r.setProperty('--paper',enc(paper));r.setProperty('--blot',enc(blot));r.setProperty('--specks',enc(specks));r.setProperty('--grain',enc(grain));
+// timeline
+document.querySelectorAll('.track').forEach(t=>{for(let i=0;i<30;i++){const e=document.createElement('i');if(i<3)e.className='on';t.appendChild(e)}});
+// blurred tasbih beads in foreground
+document.querySelectorAll('svg.beads').forEach((s,k)=>{
+  s.setAttribute('viewBox','0 0 1080 1350');
+  const [x0,y0]=s.dataset.from.split(',').map(Number),[cx,cy]=s.dataset.c.split(',').map(Number),[x1,y1]=s.dataset.to.split(',').map(Number);
+  const id='g'+k;
+  let h=`<defs><radialGradient id='${id}' cx='35%' cy='30%' r='70%'><stop offset='0' stop-color='#c8a46a'/><stop offset='.35' stop-color='#6b4a24'/><stop offset='1' stop-color='#1e140a'/></radialGradient><filter id='b${k}' x='-20%' y='-20%' width='140%' height='140%'><feGaussianBlur stdDeviation='7'/></filter></defs><g filter='url(#b${k})'>`;
+  h+=`<path d='M${x0} ${y0}Q${cx} ${cy} ${x1} ${y1}' stroke='#2a1d10' stroke-width='5' fill='none'/>`;
+  const N=34;for(let i=0;i<=N;i++){const t=i/N,x=(1-t)*(1-t)*x0+2*(1-t)*t*cx+t*t*x1,y=(1-t)*(1-t)*y0+2*(1-t)*t*cy+t*t*y1;h+=`<circle cx='${x}' cy='${y}' r='${i%11==5?26:17}' fill='url(#${id})'/>`}
+  s.innerHTML=h+'</g>';
+});
+// fit headline lines to width
+function fit(){document.querySelectorAll('.fit').forEach(el=>{const sp=el.firstElementChild;el.style.fontSize='100px';const w=sp.getBoundingClientRect().width;const W=el.clientWidth;el.style.fontSize=Math.min(+el.dataset.max||999,100*W/w*0.995)+'px'})}
+document.fonts.ready.then(()=>{fit();document.body.dataset.ready=1});
+</script>
 </body>
 </html>
