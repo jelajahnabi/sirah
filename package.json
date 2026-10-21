@@ -1,7 +1,7 @@
 {
   "name": "umroh-first-timer",
   "version": "1.0.0",
-  "description": "My Remotion video",
+  "description": "Umroh First Timer \u2014 animated educational series by MUDAHKEBAITULLAH",
   "repository": {},
   "license": "UNLICENSED",
   "engines": {
@@ -9,11 +9,15 @@
   },
   "private": true,
   "dependencies": {
+    "@fontsource/amiri": "^5.3.0",
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0",
     "@remotion/cli": "4.0.537",
+    "@remotion/fonts": "^4.0.537",
+    "@remotion/tailwind-v4": "4.0.537",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "remotion": "4.0.537",
-    "@remotion/tailwind-v4": "4.0.537",
     "tailwindcss": "4.0.0"
   },
   "devDependencies": {
@@ -28,7 +32,9 @@
     "dev": "remotion studio",
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
-    "lint": "eslint src && tsc"
+    "lint": "eslint src && tsc",
+    "render:ep01": "remotion render UFT-Episode01 out/UFT-Episode01-Kenali-5-Rukun-Umroh.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p",
+    "srt": "node --experimental-strip-types --no-warnings scripts/export-srt.ts"
   },
   "allowScripts": {
     "esbuild": false

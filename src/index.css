@@ -1,1 +1,14 @@
 @import "tailwindcss";
+
+/* Tailwind tokens mirror src/styles/theme.ts — keep both in sync. */
+@theme {
+  --color-navy: #14283f;
+  --color-navy-deep: #0d1c2e;
+  --color-ivory: #f5f0e6;
+  --color-ivory-deep: #ede4d3;
+  --color-gold: #c6a56b;
+  --color-gold-light: #e3cb9a;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-arabic: "Amiri", serif;
+}
