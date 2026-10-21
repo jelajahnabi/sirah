@@ -11,6 +11,8 @@ type Props = {
   roundTripHighlight?: number;
   /** 0..1 emphasis on the finish at Marwah. */
   finish?: number;
+  /** 0..1 emphasis on Safa as the starting hill (defaults to "glow before the first step"). */
+  start?: number;
 };
 
 const VB_W = 900;
@@ -36,7 +38,7 @@ const walkerPos = (legs: number) => {
  * Marwah (right). Odd legs (1, 3, 5, 7) go Safa → Marwah; even legs come back.
  * Seven legs therefore start at Safa and finish at Marwah, and a round trip counts as two.
  */
-export const SaiRouteAnimation: React.FC<Props> = ({ width, legs, build = 1, roundTripHighlight = 0, finish = 0 }) => {
+export const SaiRouteAnimation: React.FC<Props> = ({ width, legs, build = 1, roundTripHighlight = 0, finish = 0, start }) => {
   const walker = walkerPos(legs);
   const height = (width * VB_H) / VB_W;
 
@@ -75,7 +77,7 @@ export const SaiRouteAnimation: React.FC<Props> = ({ width, legs, build = 1, rou
         opacity={0.16 * roundTripHighlight}
       />
 
-      <Hill x={SAFA_X} name="SAFA" glow={legs < 0.4 ? build : 0} />
+      <Hill x={SAFA_X} name="SAFA" glow={start ?? (legs < 0.4 ? build : 0)} />
       <Hill x={MARWAH_X} name="MARWAH" glow={finish} />
 
       {/* turn connectors */}

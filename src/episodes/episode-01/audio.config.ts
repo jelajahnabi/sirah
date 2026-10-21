@@ -1,14 +1,12 @@
 /**
- * Audio assets for Episode 01.
+ * Background music for Episode 01.
  *
- * Set a path (relative to /public) ONLY when you have an actual, authorized file.
- * - narration: recorded or synthesized voice-over aligned to narration.ts timestamps
- *   (one continuous 60 s file starting at 00:00).
- * - music: licensed background music. It is automatically ducked under narration.
+ * Set a path (relative to /public) ONLY for an actual, licensed file. It is looped,
+ * faded, and automatically ducked under the narration.
  *
- * Both are null by default: the rendered video is silent until real audio is supplied.
+ * Narration is NOT configured here: per-scene voice-over files are listed in
+ * voiceover.manifest.json, which `npm run vo:measure` writes after measuring them.
  */
-export const EPISODE_01_AUDIO: { narration: string | null; music: string | null } = {
-  narration: null, // e.g. "assets/audio/episode-01/narration.wav"
+export const EPISODE_01_AUDIO: { music: string | null } = {
   music: null, // e.g. "assets/audio/music/series-bed.mp3"
 };

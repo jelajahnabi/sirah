@@ -1,0 +1,8 @@
+{
+  "status": "not-recorded",
+  "note": "No voice-over audio yet. Timing uses narration.ts estimates. Run `npm run vo:synth` (TTS) or record files manually, then `npm run vo:measure`.",
+  "provider": null,
+  "voice": null,
+  "measuredAt": null,
+  "scenes": {}
+}

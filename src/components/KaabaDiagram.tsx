@@ -31,11 +31,13 @@ type Props = {
   labels?: number;
   /** 0..1 draw-on of the Ka'bah + Hijr Ismail. */
   build?: number;
+  /** 0..1 emphasis ring on the Hajar Aswad corner (when the narrator names it). */
+  hajarAswad?: number;
   children?: React.ReactNode;
   style?: React.CSSProperties;
 };
 
-export const KaabaDiagram: React.FC<Props> = ({ size, labels = 1, build = 1, children, style }) => {
+export const KaabaDiagram: React.FC<Props> = ({ size, labels = 1, build = 1, hajarAswad = 0, children, style }) => {
   const door1 = lerp(E, N, 0.22);
   const door2 = lerp(E, N, 0.44);
   // Hijr Ismail: a semicircular wall bulging outward from the NW face, with openings at both ends.
@@ -126,6 +128,12 @@ export const KaabaDiagram: React.FC<Props> = ({ size, labels = 1, build = 1, chi
         <circle cx={E.x} cy={E.y} r={12} fill="#3A3A3A" stroke="#C9CDD2" strokeWidth={5} />
       </g>
 
+      {hajarAswad > 0 ? (
+        <g opacity={hajarAswad}>
+          <circle cx={E.x} cy={E.y} r={30} fill="none" stroke={colors.gold} strokeWidth={7} />
+          <circle cx={E.x} cy={E.y} r={46} fill="none" stroke={colors.gold} strokeWidth={3} opacity={0.6} />
+        </g>
+      ) : null}
       <Label x={E.x - 8} y={E.y + 52} text="Hajar Aswad" anchor="start" delay={0} />
       <Label x={(door1.x + door2.x) / 2 + 40} y={(door1.y + door2.y) / 2 - 30} text="Pintu" anchor="start" delay={0.15} />
       <Label x={366} y={372} text="Hijr Ismail" delay={0.3} rotate={-43} fontSize={20} />

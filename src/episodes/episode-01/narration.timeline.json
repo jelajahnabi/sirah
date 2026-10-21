@@ -1,0 +1,378 @@
+{
+  "episode": "UMROH FIRST TIMER — EPISODE 01",
+  "theme": "Kenali 5 Rukun Umroh",
+  "producer": "MUDAHKEBAITULLAH",
+  "language": "id-ID",
+  "fps": 30,
+  "durationSec": 60,
+  "timingSource": "estimated (no voice-over recorded yet)",
+  "voice": {
+    "brief": "Pria Indonesia dewasa (30–40 th), hangat, bersahabat, tenang, artikulasi jelas; gaya pembimbing manasik profesional, tidak terlalu formal, bukan gaya pembaca berita, tidak dramatis; tempo natural untuk pemula.",
+    "provider": null,
+    "voice": null
+  },
+  "scenes": [
+    {
+      "order": 1,
+      "key": "opening",
+      "title": "Opening",
+      "text": "Baru pertama kali mau umroh? Sebelum berangkat ke Tanah Suci, yuk kenali lima rukun umroh yang wajib kita pahami!",
+      "ttsText": "Baru pertama kali mau umroh? Sebelum berangkat ke Tanah Suci, yuk kenali lima rukun umroh yang wajib kita pahami!",
+      "audioFile": "assets/audio/episode-01/vo/01-opening.wav (not recorded yet)",
+      "audioDurationSec": null,
+      "estimatedSec": 7.2,
+      "sceneStartSec": 0,
+      "sceneEndSec": 8.967,
+      "voiceStartSec": 0.6,
+      "voiceEndSec": 7.8,
+      "phrases": [
+        {
+          "subtitle": "Baru pertama kali mau umroh?",
+          "highlight": [
+            "umroh"
+          ],
+          "spoken": "Baru pertama kali mau umroh?",
+          "startSec": 0.6,
+          "endSec": 2.567
+        },
+        {
+          "subtitle": "Sebelum berangkat ke Tanah Suci,",
+          "highlight": [
+            "Tanah Suci"
+          ],
+          "spoken": "Sebelum berangkat ke Tanah Suci,",
+          "startSec": 2.567,
+          "endSec": 4.567
+        },
+        {
+          "subtitle": "yuk kenali lima rukun umroh",
+          "highlight": [
+            "lima rukun umroh"
+          ],
+          "spoken": "yuk kenali lima rukun umroh",
+          "startSec": 4.567,
+          "endSec": 6.133
+        },
+        {
+          "subtitle": "yang wajib kita pahami!",
+          "highlight": [],
+          "spoken": "yang wajib kita pahami!",
+          "startSec": 6.133,
+          "endSec": 8.1
+        }
+      ]
+    },
+    {
+      "order": 2,
+      "key": "fivePillars",
+      "title": "Pengenalan",
+      "text": "Rukun adalah bagian pokok ibadah. Jika salah satunya tidak dilaksanakan, umroh belum sah.",
+      "ttsText": "Rukun adalah bagian pokok ibadah. Jika salah satunya tidak dilaksanakan, umroh belum sah.",
+      "audioFile": "assets/audio/episode-01/vo/02-fivePillars.wav (not recorded yet)",
+      "audioDurationSec": null,
+      "estimatedSec": 5.8,
+      "sceneStartSec": 8.967,
+      "sceneEndSec": 16.3,
+      "voiceStartSec": 9.367,
+      "voiceEndSec": 15.167,
+      "phrases": [
+        {
+          "subtitle": "Rukun adalah bagian pokok ibadah.",
+          "highlight": [
+            "Rukun"
+          ],
+          "spoken": "Rukun adalah bagian pokok ibadah.",
+          "startSec": 9.367,
+          "endSec": 11.6
+        },
+        {
+          "subtitle": "Jika salah satunya tidak dilaksanakan,",
+          "highlight": [],
+          "spoken": "Jika salah satunya tidak dilaksanakan,",
+          "startSec": 11.6,
+          "endSec": 13.9
+        },
+        {
+          "subtitle": "umroh belum sah.",
+          "highlight": [
+            "belum sah"
+          ],
+          "spoken": "umroh belum sah.",
+          "startSec": 13.9,
+          "endSec": 15.467
+        }
+      ]
+    },
+    {
+      "order": 3,
+      "key": "ihram",
+      "title": "Ihram",
+      "text": "Pertama, ihram. Yaitu berniat masuk ke dalam ibadah umroh, dengan memperhatikan ketentuan miqat.",
+      "ttsText": "Pertama, ihram. Yaitu berniat masuk ke dalam ibadah umroh, dengan memperhatikan ketentuan miqat.",
+      "audioFile": "assets/audio/episode-01/vo/03-ihram.wav (not recorded yet)",
+      "audioDurationSec": null,
+      "estimatedSec": 6.4,
+      "sceneStartSec": 16.3,
+      "sceneEndSec": 24.4,
+      "voiceStartSec": 16.7,
+      "voiceEndSec": 23.1,
+      "phrases": [
+        {
+          "subtitle": "Pertama, IHRAM.",
+          "highlight": [
+            "IHRAM"
+          ],
+          "spoken": "Pertama, ihram.",
+          "startSec": 16.7,
+          "endSec": 17.933
+        },
+        {
+          "subtitle": "Yaitu berniat masuk ke dalam ibadah umroh,",
+          "highlight": [
+            "berniat"
+          ],
+          "spoken": "Yaitu berniat masuk ke dalam ibadah umroh,",
+          "startSec": 17.933,
+          "endSec": 20.567
+        },
+        {
+          "subtitle": "dengan memperhatikan ketentuan miqat.",
+          "highlight": [
+            "miqat"
+          ],
+          "spoken": "dengan memperhatikan ketentuan miqat.",
+          "startSec": 20.567,
+          "endSec": 23.4
+        }
+      ]
+    },
+    {
+      "order": 4,
+      "key": "tawaf",
+      "title": "Tawaf",
+      "text": "Kedua, tawaf. Mengelilingi Ka'bah tujuh putaran, dimulai dari arah Hajar Aswad, dengan Ka'bah selalu di sebelah kiri.",
+      "ttsText": "Kedua, tawaf. Mengelilingi Kakbah tujuh putaran, dimulai dari arah Hajar Aswad, dengan Kakbah selalu di sebelah kiri.",
+      "audioFile": "assets/audio/episode-01/vo/04-tawaf.wav (not recorded yet)",
+      "audioDurationSec": null,
+      "estimatedSec": 7.8,
+      "sceneStartSec": 24.4,
+      "sceneEndSec": 34.867,
+      "voiceStartSec": 24.8,
+      "voiceEndSec": 32.6,
+      "phrases": [
+        {
+          "subtitle": "Kedua, TAWAF.",
+          "highlight": [
+            "TAWAF"
+          ],
+          "spoken": "Kedua, tawaf.",
+          "startSec": 24.8,
+          "endSec": 25.933
+        },
+        {
+          "subtitle": "Mengelilingi Ka'bah tujuh putaran,",
+          "highlight": [
+            "tujuh putaran"
+          ],
+          "spoken": "Mengelilingi Ka'bah tujuh putaran,",
+          "startSec": 25.933,
+          "endSec": 28.1
+        },
+        {
+          "subtitle": "dimulai dari arah Hajar Aswad,",
+          "highlight": [
+            "Hajar Aswad"
+          ],
+          "spoken": "dimulai dari arah Hajar Aswad,",
+          "startSec": 28.1,
+          "endSec": 30.067
+        },
+        {
+          "subtitle": "dengan Ka'bah selalu di sebelah kiri.",
+          "highlight": [
+            "kiri"
+          ],
+          "spoken": "dengan Ka'bah selalu di sebelah kiri.",
+          "startSec": 30.067,
+          "endSec": 32.9
+        }
+      ]
+    },
+    {
+      "order": 5,
+      "key": "sai",
+      "title": "Sa'i",
+      "text": "Ketiga, sa'i. Berjalan tujuh lintasan antara Safa dan Marwah. Dimulai dari Safa, dan berakhir di Marwah.",
+      "ttsText": "Ketiga, sai. Berjalan tujuh lintasan antara Safa dan Marwah. Dimulai dari Safa, dan berakhir di Marwah.",
+      "audioFile": "assets/audio/episode-01/vo/05-sai.wav (not recorded yet)",
+      "audioDurationSec": null,
+      "estimatedSec": 7,
+      "sceneStartSec": 34.867,
+      "sceneEndSec": 44.333,
+      "voiceStartSec": 35.267,
+      "voiceEndSec": 42.267,
+      "phrases": [
+        {
+          "subtitle": "Ketiga, SA'I.",
+          "highlight": [
+            "SA'I"
+          ],
+          "spoken": "Ketiga, sa'i.",
+          "startSec": 35.267,
+          "endSec": 36.367
+        },
+        {
+          "subtitle": "Berjalan tujuh lintasan",
+          "highlight": [
+            "tujuh lintasan"
+          ],
+          "spoken": "Berjalan tujuh lintasan",
+          "startSec": 36.367,
+          "endSec": 37.7
+        },
+        {
+          "subtitle": "antara Safa dan Marwah.",
+          "highlight": [
+            "Safa",
+            "Marwah"
+          ],
+          "spoken": "antara Safa dan Marwah.",
+          "startSec": 37.7,
+          "endSec": 39.367
+        },
+        {
+          "subtitle": "Dimulai dari Safa,",
+          "highlight": [
+            "Safa"
+          ],
+          "spoken": "Dimulai dari Safa,",
+          "startSec": 39.367,
+          "endSec": 40.6
+        },
+        {
+          "subtitle": "dan berakhir di Marwah.",
+          "highlight": [
+            "Marwah"
+          ],
+          "spoken": "dan berakhir di Marwah.",
+          "startSec": 40.6,
+          "endSec": 42.567
+        }
+      ]
+    },
+    {
+      "order": 6,
+      "key": "tahallul",
+      "title": "Tahallul",
+      "text": "Keempat, tahallul. Mencukur atau memotong rambut sesuai ketentuan.",
+      "ttsText": "Keempat, tahallul. Mencukur atau memotong rambut sesuai ketentuan.",
+      "audioFile": "assets/audio/episode-01/vo/06-tahallul.wav (not recorded yet)",
+      "audioDurationSec": null,
+      "estimatedSec": 4.4,
+      "sceneStartSec": 44.333,
+      "sceneEndSec": 50.467,
+      "voiceStartSec": 44.733,
+      "voiceEndSec": 49.133,
+      "phrases": [
+        {
+          "subtitle": "Keempat, TAHALLUL.",
+          "highlight": [
+            "TAHALLUL"
+          ],
+          "spoken": "Keempat, tahallul.",
+          "startSec": 44.733,
+          "endSec": 46.133
+        },
+        {
+          "subtitle": "Mencukur atau memotong rambut",
+          "highlight": [
+            "memotong rambut"
+          ],
+          "spoken": "Mencukur atau memotong rambut",
+          "startSec": 46.133,
+          "endSec": 47.8
+        },
+        {
+          "subtitle": "sesuai ketentuan.",
+          "highlight": [],
+          "spoken": "sesuai ketentuan.",
+          "startSec": 47.8,
+          "endSec": 49.433
+        }
+      ]
+    },
+    {
+      "order": 7,
+      "key": "tertib",
+      "title": "Tertib",
+      "text": "Kelima, tertib. Semua rukun dilaksanakan sesuai urutannya.",
+      "ttsText": "Kelima, tertib. Semua rukun dilaksanakan sesuai urutannya.",
+      "audioFile": "assets/audio/episode-01/vo/07-tertib.wav (not recorded yet)",
+      "audioDurationSec": null,
+      "estimatedSec": 4,
+      "sceneStartSec": 50.467,
+      "sceneEndSec": 55.833,
+      "voiceStartSec": 50.833,
+      "voiceEndSec": 54.833,
+      "phrases": [
+        {
+          "subtitle": "Kelima, TERTIB.",
+          "highlight": [
+            "TERTIB"
+          ],
+          "spoken": "Kelima, tertib.",
+          "startSec": 50.833,
+          "endSec": 52.067
+        },
+        {
+          "subtitle": "Semua rukun dilaksanakan",
+          "highlight": [],
+          "spoken": "Semua rukun dilaksanakan",
+          "startSec": 52.067,
+          "endSec": 53.467
+        },
+        {
+          "subtitle": "sesuai urutannya.",
+          "highlight": [
+            "sesuai urutannya"
+          ],
+          "spoken": "sesuai urutannya.",
+          "startSec": 53.467,
+          "endSec": 55.133
+        }
+      ]
+    },
+    {
+      "order": 8,
+      "key": "outro",
+      "title": "Closing",
+      "text": "Yuk, belajar umroh bersama Mudahkebaitullah!",
+      "ttsText": "Yuk, belajar umroh bersama Mudah ke Baitullah!",
+      "audioFile": "assets/audio/episode-01/vo/08-outro.wav (not recorded yet)",
+      "audioDurationSec": null,
+      "estimatedSec": 2.8,
+      "sceneStartSec": 55.833,
+      "sceneEndSec": 60,
+      "voiceStartSec": 56.3,
+      "voiceEndSec": 59.1,
+      "phrases": [
+        {
+          "subtitle": "Yuk, belajar umroh bersama",
+          "highlight": [],
+          "spoken": "Yuk, belajar umroh bersama",
+          "startSec": 56.3,
+          "endSec": 57.767
+        },
+        {
+          "subtitle": "Mudahkebaitullah!",
+          "highlight": [
+            "Mudahkebaitullah"
+          ],
+          "spoken": "Mudahkebaitullah!",
+          "startSec": 57.767,
+          "endSec": 59.4
+        }
+      ]
+    }
+  ]
+}

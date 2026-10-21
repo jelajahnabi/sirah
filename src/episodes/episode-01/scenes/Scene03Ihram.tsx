@@ -6,7 +6,8 @@ import { PilgrimCharacter } from "../../../components/PilgrimCharacter";
 import { SceneBackground } from "../../../components/SceneBackground";
 import { SceneHeader } from "../../../components/SceneHeader";
 import { colors, fonts, shadow, springs } from "../../../styles/theme";
-import { SCENES } from "../timeline";
+import type { SceneProps } from "../Episode01";
+import { cue } from "../sync";
 
 const GROUND = 1330;
 
@@ -48,17 +49,21 @@ const MiqatBackdrop: React.FC<{ build: number }> = ({ build }) => {
 };
 
 /** 00:16–00:25 — Pilgrims at the miqat entering ihram with the niat. */
-export const Scene03Ihram: React.FC = () => {
+export const Scene03Ihram: React.FC<SceneProps> = ({ t }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const dur = SCENES.ihram.duration;
+  const dur = t.duration;
+  // "Pertama, ihram." → pilgrims enter; "Yaitu berniat…" → NIAT UMROH + talbiyah;
+  // "…ketentuan miqat." → bubble gives way to the miqat note.
+  const niatAt = cue(t, 1);
+  const miqatAt = cue(t, 2);
   const build = progress(frame, 4, 26);
   const maleIn = springAt(frame, fps, 14, springs.gentle);
   const femaleIn = springAt(frame, fps, 24, springs.gentle);
-  const bubble = Math.min(springAt(frame, fps, 70, springs.pop), 1 - progress(frame, 146, 10));
-  const niatGlow = progress(frame, 60, 20) * (0.6 + 0.4 * Math.sin(frame / 6));
+  const bubble = Math.min(springAt(frame, fps, niatAt - 4, springs.pop), 1 - progress(frame, miqatAt - 8, 10));
+  const niatGlow = progress(frame, niatAt - 6, 20) * (0.6 + 0.4 * Math.sin(frame / 6));
   const cam = interpolate(frame, [0, dur], [1.04, 1]);
-  const speaking = frame > 70 && frame < 150 ? 1 : 0;
+  const speaking = frame > niatAt && frame < miqatAt - 8 ? 1 : 0;
 
   return (
     <AbsoluteFill style={{ opacity: sceneEnvelope(frame, dur) }}>
@@ -130,13 +135,33 @@ export const Scene03Ihram: React.FC = () => {
           background: colors.white,
           borderRadius: 34,
           boxShadow: shadow.card,
-          padding: "26px 34px",
+          padding: "58px 34px 26px",
           textAlign: "center",
           transformOrigin: "25% 100%",
           transform: `scale(${bubble})`,
           opacity: Math.min(1, bubble * 1.5),
         }}
       >
+        <div
+          style={{
+            position: "absolute",
+            top: -30,
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: colors.gold,
+            color: colors.navy,
+            borderRadius: 999,
+            padding: "8px 30px",
+            fontFamily: fonts.body,
+            fontWeight: 800,
+            fontSize: 30,
+            letterSpacing: 5,
+            whiteSpace: "nowrap",
+            boxShadow: shadow.soft,
+          }}
+        >
+          NIAT UMROH
+        </div>
         <div style={{ fontFamily: fonts.arabic, fontWeight: 700, fontSize: 60, color: colors.navy, direction: "rtl", lineHeight: 1.5 }}>
           لَبَّيْكَ اللّٰهُمَّ عُمْرَةً
         </div>
@@ -160,7 +185,7 @@ export const Scene03Ihram: React.FC = () => {
         />
       </div>
 
-      <InfoChip label="CATATAN" delay={154} tone="navy" fontSize={36} style={{ left: 140, right: 140, top: 420 }}>
+      <InfoChip label="KETENTUAN MIQAT" delay={miqatAt} tone="navy" fontSize={36} style={{ left: 140, right: 140, top: 420 }}>
         Memulai ihram dari miqat termasuk <b style={{ color: colors.goldLight }}>wajib</b> umroh, bukan rukun.
       </InfoChip>
     </AbsoluteFill>

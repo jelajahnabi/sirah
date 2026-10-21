@@ -6,31 +6,33 @@ import { SceneBackground } from "../../../components/SceneBackground";
 import { SceneHeader } from "../../../components/SceneHeader";
 import { TawafPathAnimation } from "../../../components/TawafPathAnimation";
 import { colors, fonts, shadow, springs } from "../../../styles/theme";
-import { SCENES } from "../timeline";
+import type { SceneProps } from "../Episode01";
+import { cue } from "../sync";
 
-const WALK_START = 56;
-const FIRST_LAP = 54; // first lap slower so the direction reads clearly
-const LAP = 24;
-const WALK_END = WALK_START + FIRST_LAP + LAP * 6;
-
-/** Piecewise lap progress: slow first lap, then six steady laps. */
-const lapsAt = (f: number) =>
-  interpolate(f, [WALK_START, WALK_START + FIRST_LAP, WALK_END], [0, 1, 7], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: (t) => t,
-  });
-
-/** 00:25–00:35 — Top-down Ka'bah, seven counterclockwise laps with the Ka'bah on the left. */
-export const Scene04Tawaf: React.FC = () => {
+/** 00:25-ish — Top-down Ka'bah, seven counterclockwise laps with the Ka'bah on the left. */
+export const Scene04Tawaf: React.FC<SceneProps> = ({ t }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const dur = SCENES.tawaf.duration;
-  const build = progress(frame, 10, 30, easeInOut);
-  const labels = progress(frame, 30, 30);
-  const laps = frame < WALK_START + FIRST_LAP ? interpolate(frame, [WALK_START, WALK_START + FIRST_LAP], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut }) : lapsAt(frame);
+  const dur = t.duration;
+  // "Mengelilingi Ka'bah tujuh putaran" → walking starts; all 7 laps finish ~1 s before the cut.
+  const WALK_END = dur - 30;
+  const WALK_START = Math.min(cue(t, 1), WALK_END - 170);
+  const FIRST_LAP = Math.round((WALK_END - WALK_START) * 0.24); // slower first lap so the direction reads clearly
+  // "dimulai dari arah Hajar Aswad" → corner + start line emphasised; "…di sebelah kiri" → direction note
+  const hajarAt = cue(t, 2);
+  const kiriAt = cue(t, 3);
+  const build = progress(frame, 4, 26, easeInOut);
+  const labels = progress(frame, 14, 26);
+  const laps =
+    frame < WALK_START + FIRST_LAP
+      ? interpolate(frame, [WALK_START, WALK_START + FIRST_LAP], [0, 1], { extrapolateLeft: "clamp", extrapolateRight: "clamp", easing: easeInOut })
+      : interpolate(frame, [WALK_START + FIRST_LAP, WALK_END], [1, 7], { extrapolateLeft: "clamp", extrapolateRight: "clamp" });
   const lapShown = Math.min(7, Math.max(laps > 0 ? 1 : 0, Math.ceil(laps - 1e-6)));
-  const done = springAt(frame, fps, WALK_END + 4, springs.pop);
+  const done = springAt(frame, fps, WALK_END + 2, springs.pop);
+  const hajar = interpolate(frame, [hajarAt - 4, hajarAt + 6, hajarAt + 50, hajarAt + 66], [0, 1, 1, 0], {
+    extrapolateLeft: "clamp",
+    extrapolateRight: "clamp",
+  });
   const diagScale = interpolate(frame, [0, dur], [0.96, 1.02]);
 
   return (
@@ -39,10 +41,10 @@ export const Scene04Tawaf: React.FC = () => {
       <SceneHeader number="02" title="TAWAF" subtitle="7 Putaran · Ka'bah di sebelah kiri" />
 
       <div style={{ position: "absolute", left: 90, top: 370, transform: `scale(${diagScale})`, transformOrigin: "50% 50%" }}>
-        <TawafPathAnimation size={900} laps={laps} build={build} labels={labels} leftPointer={progress(frame, WALK_START, 20)} />
+        <TawafPathAnimation size={900} laps={laps} build={build} labels={labels} leftPointer={progress(frame, WALK_START, 20)} hajarAswad={hajar} />
       </div>
 
-      <InfoChip label="ARAH" delay={WALK_START + 10} tone="navy" fontSize={28} style={{ left: 70, top: 1130, width: 330 }}>
+      <InfoChip label="ARAH" delay={kiriAt} tone="navy" fontSize={28} style={{ left: 70, top: 1130, width: 330 }}>
         Berlawanan arah jarum jam, Ka'bah di <b style={{ color: colors.goldLight }}>kiri</b>
       </InfoChip>
 

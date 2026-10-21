@@ -6,7 +6,8 @@ import { PillarIcon } from "../../../components/PillarIcon";
 import { SceneBackground } from "../../../components/SceneBackground";
 import { PILLARS } from "../../../series/umroh-first-timer/pillars";
 import { colors, fonts, safe, shadow, springs } from "../../../styles/theme";
-import { SCENES } from "../timeline";
+import type { SceneProps } from "../Episode01";
+import { cue } from "../sync";
 
 const LEGEND = [
   { k: "RUKUN", v: "Wajib dikerjakan. Tanpanya umroh tidak sah." },
@@ -15,10 +16,13 @@ const LEGEND = [
 ];
 
 /** 00:08–00:16 — Five numbered cards enter sequentially, then rukun vs wajib vs sunnah legend. */
-export const Scene02FivePillars: React.FC = () => {
+export const Scene02FivePillars: React.FC<SceneProps> = ({ t }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const dur = SCENES.fivePillars.duration;
+  const dur = t.duration;
+  // "Rukun adalah bagian pokok…" → legend; "…umroh belum sah" → RUKUN card pulses
+  const legendAt = cue(t, 0) + 30;
+  const belumSah = springAt(frame, fps, cue(t, 2), springs.pop) * (1 - progress(frame, cue(t, 2) + 40, 20));
   const cam = interpolate(frame, [0, dur], [1, 1.03]);
 
   return (
@@ -42,7 +46,7 @@ export const Scene02FivePillars: React.FC = () => {
         </div>
 
         {PILLARS.map((p, i) => {
-          const s = springAt(frame, fps, 22 + i * 13, springs.pop);
+          const s = springAt(frame, fps, 8 + i * 9, springs.pop);
           const top = 400 + i * 156;
           return (
             <div
@@ -96,7 +100,7 @@ export const Scene02FivePillars: React.FC = () => {
         {/* rukun ≠ wajib ≠ sunnah */}
         <div className="absolute flex" style={{ top: 1200, left: safe.x, right: safe.x, gap: 16 }}>
           {LEGEND.map((l, i) => {
-            const s = springAt(frame, fps, 112 + i * 9, springs.gentle);
+            const s = springAt(frame, fps, legendAt + i * 8, springs.gentle);
             const isRukun = i === 0;
             return (
               <div
@@ -108,7 +112,8 @@ export const Scene02FivePillars: React.FC = () => {
                   background: isRukun ? colors.navy : "rgba(20,40,63,0.06)",
                   border: isRukun ? "none" : `2px solid rgba(20,40,63,0.12)`,
                   opacity: s,
-                  transform: `translateY(${(1 - s) * 24}px)`,
+                  transform: `translateY(${(1 - s) * 24}px) scale(${isRukun ? 1 + 0.08 * belumSah : 1})`,
+                  boxShadow: isRukun ? `0 0 0 ${6 * belumSah}px ${colors.gold}` : undefined,
                 }}
               >
                 <div style={{ fontFamily: fonts.body, fontWeight: 800, fontSize: 24, letterSpacing: 3, color: colors.gold }}>{l.k}</div>

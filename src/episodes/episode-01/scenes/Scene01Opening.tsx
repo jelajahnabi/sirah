@@ -6,15 +6,17 @@ import { MasjidilHaramAerial } from "../../../components/MasjidilHaramAerial";
 import { SeriesTag } from "../../../components/SeriesTag";
 import { episodeLabel, series } from "../../../series/umroh-first-timer/series.config";
 import { colors, fonts, safe, springs } from "../../../styles/theme";
-import { SCENES } from "../timeline";
+import type { SceneProps } from "../Episode01";
+import { cue } from "../sync";
 
 /** 00:00–00:08 — Aerial Masjidil Haram, slow push-in, kinetic headline. */
-export const Scene01Opening: React.FC = () => {
+export const Scene01Opening: React.FC<SceneProps> = ({ t }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const dur = SCENES.opening.duration;
+  const dur = t.duration;
   const push = progress(frame, 0, dur, easeInOut);
-  const pill = springAt(frame, fps, 52, springs.pop);
+  // "…yuk kenali lima rukun umroh" → the pill lands with the words
+  const pill = springAt(frame, fps, cue(t, 2) - 3, springs.pop);
   const titleFloat = -push * 30;
 
   return (

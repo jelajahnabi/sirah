@@ -6,13 +6,16 @@ import { SceneBackground } from "../../../components/SceneBackground";
 import { SceneHeader } from "../../../components/SceneHeader";
 import { PILLARS } from "../../../series/umroh-first-timer/pillars";
 import { colors, fonts, shadow, springs } from "../../../styles/theme";
-import { SCENES } from "../timeline";
+import type { SceneProps } from "../Episode01";
+import { cue } from "../sync";
 
 /** 00:51–00:56 — The five icons connect into a timeline; TERTIB is highlighted. */
-export const Scene07Tertib: React.FC = () => {
+export const Scene07Tertib: React.FC<SceneProps> = ({ t }) => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
-  const dur = SCENES.tertib.duration;
+  const dur = t.duration;
+  // "Kelima, tertib." → node 05 highlighted; "Semua rukun dilaksanakan sesuai urutannya" → order chips
+  const orderAt = cue(t, 1);
   const order = PILLARS.slice(0, 4);
 
   return (
@@ -21,7 +24,7 @@ export const Scene07Tertib: React.FC = () => {
       <SceneHeader number="05" title="TERTIB" subtitle="Dikerjakan sesuai urutannya" />
 
       <div style={{ position: "absolute", left: 90, top: 560 }}>
-        <FivePillarsTimeline width={900} delay={8} stagger={7} highlight={4} highlightAt={48} />
+        <FivePillarsTimeline width={900} delay={8} stagger={7} highlight={4} highlightAt={Math.max(30, cue(t, 0) + 14)} />
       </div>
 
       <div
@@ -43,7 +46,7 @@ export const Scene07Tertib: React.FC = () => {
         <div style={{ fontFamily: fonts.body, fontWeight: 800, fontSize: 26, letterSpacing: 6, color: colors.goldDeep }}>URUTAN YANG BENAR</div>
         <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "nowrap" }}>
           {order.map((p, i) => {
-            const s = springAt(frame, fps, 56 + i * 8, springs.pop);
+            const s = springAt(frame, fps, orderAt + i * 7, springs.pop);
             return (
               <React.Fragment key={p.id}>
                 {i > 0 ? (

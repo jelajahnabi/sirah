@@ -12,6 +12,8 @@ type Props = {
   labels?: number;
   /** 0..1 visibility of the "Ka'bah on the left" pointer on the walker. */
   leftPointer?: number;
+  /** 0..1 emphasis on the Hajar Aswad corner. */
+  hajarAswad?: number;
 };
 
 const R0 = 258;
@@ -42,7 +44,7 @@ const spiralPath = (laps: number) => {
   return d;
 };
 
-export const TawafPathAnimation: React.FC<Props> = ({ size, laps, build = 1, labels = 1, leftPointer = 1 }) => {
+export const TawafPathAnimation: React.FC<Props> = ({ size, laps, build = 1, labels = 1, leftPointer = 1, hajarAswad = 0 }) => {
   const frame = useCurrentFrame();
   const walker = pointAt(laps);
   const headingDeg = (-walker.theta * 180) / Math.PI;
@@ -50,7 +52,7 @@ export const TawafPathAnimation: React.FC<Props> = ({ size, laps, build = 1, lab
   const lapFrac = laps - currentLap;
 
   return (
-    <KaabaDiagram size={size} build={build} labels={labels}>
+    <KaabaDiagram size={size} build={build} labels={labels} hajarAswad={hajarAswad}>
       {/* other pilgrims, all moving counterclockwise */}
       {new Array(34).fill(0).map((_, i) => {
         const r = 200 + rand(i) * 200;

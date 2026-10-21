@@ -5,7 +5,8 @@
 export const series = {
   id: "umroh-first-timer",
   title: "UMROH FIRST TIMER",
-  tagline: "Belajar Umroh, Selangkah Demi Selangkah",
+  tagline: "Serial Edukasi Umroh untuk Pemula",
+  slogan: "Belajar Umroh, Selangkah Demi Selangkah",
   producer: "MUDAHKEBAITULLAH",
   producerLabel: "PRODUCED BY",
   outroCallToAction: "Yuk, belajar umroh bersama Mudahkebaitullah!",

@@ -26,6 +26,7 @@
     "@types/web": "0.0.166",
     "eslint": "10.12.0",
     "prettier": "3.8.1",
+    "tsx": "^4.19.2",
     "typescript": "5.9.3"
   },
   "scripts": {
@@ -33,8 +34,12 @@
     "build": "remotion bundle",
     "upgrade": "remotion upgrade",
     "lint": "eslint src && tsc",
-    "render:ep01": "remotion render UFT-Episode01 out/UFT-Episode01-Kenali-5-Rukun-Umroh.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p",
-    "srt": "node --experimental-strip-types --no-warnings scripts/export-srt.ts"
+    "render:ep01": "remotion render UFT-Episode01 out/UFT-Episode01-Kenali-5-Rukun-Umroh.mp4 --codec=h264 --crf=18 --pixel-format=yuv420p --audio-codec=aac --audio-bitrate=192k",
+    "vo:synth": "tsx scripts/vo/synthesize.ts",
+    "vo:measure": "tsx scripts/vo/measure.ts",
+    "vo:export": "tsx scripts/vo/export.ts",
+    "vo:validate": "tsx scripts/vo/validate.ts",
+    "validate:ep01": "tsx scripts/vo/validate.ts --video out/UFT-Episode01-Kenali-5-Rukun-Umroh.mp4"
   },
   "allowScripts": {
     "esbuild": false

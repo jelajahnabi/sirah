@@ -1,42 +1,74 @@
 # UMROH FIRST TIMER — Episode 01: Kenali 5 Rukun Umroh
 
-Naskah narasi (voice-over) Bahasa Indonesia, 60 detik, 30 fps.
-**Sumber kebenaran timing ada di `narration.ts`.** File ini untuk pengisi suara dan reviewer. Kalau teks atau timing diubah, ubah `narration.ts` juga supaya subtitle dan SRT ikut berubah.
+Naskah voice-over final. **Sumber kebenaran teks ada di `narration.ts`.** Timing **tidak** ditulis manual: timing dihitung dari durasi audio yang benar-benar terukur (`voiceover.manifest.json`). Hasilnya diekspor ke `narration.timeline.json` dan `out/episode-01.id.srt`.
 
-Gaya bacaan: hangat, jelas, seperti kakak pembimbing. Tempo sekitar 2,3–2,6 kata per detik. Beri jeda singkat setelah setiap nomor rukun ("Pertama, ihram.").
+## Karakter suara
+Pria Indonesia dewasa (usia suara 30–40 tahun). Hangat, bersahabat, tenang, artikulasi jelas. Gaya pembimbing manasik profesional: tidak terlalu formal, bukan gaya pembaca berita, tidak berlebihan atau dramatis. Tempo natural yang mudah diikuti pemula. Beri jeda singkat setelah setiap nama rukun ("Pertama, ihram.").
 
-| # | Waktu | Adegan | Narasi |
-|---|-------|--------|--------|
-| 1 | 00:00.4 – 00:07.6 | Aerial Masjidil Haram | Baru pertama kali mau umroh? Ada lima rukun yang wajib kamu pahami sebelum berangkat! |
-| 2 | 00:08.4 – 00:15.4 | 5 kartu rukun | Inilah lima rukun umroh yang harus dilaksanakan agar ibadah kita sah. |
-| 3 | 00:16.4 – 00:24.4 | Miqat / ihram | Pertama, ihram. Yaitu berniat masuk ke dalam ibadah umroh, dengan memperhatikan ketentuan miqat. |
-| 4 | 00:25.4 – 00:34.2 | Diagram tawaf | Kedua, tawaf. Mengelilingi Ka'bah sebanyak tujuh putaran, dengan Ka'bah berada di sebelah kiri. |
-| 5 | 00:35.4 – 00:43.6 | Diagram sa'i | Ketiga, sa'i. Berjalan tujuh lintasan antara Safa dan Marwah. Dimulai dari Safa dan berakhir di Marwah. |
-| 6 | 00:44.4 – 00:50.6 | Tahallul | Keempat, tahallul, dengan mencukur atau memotong rambut sesuai ketentuannya. |
-| 7 | 00:51.3 – 00:55.8 | Timeline 5 rukun | Kelima, tertib. Melaksanakan rukun-rukun tersebut sesuai urutannya. |
-| 8 | 00:56.3 – 00:59.4 | Outro brand | Yuk, belajar umroh bersama Mudahkebaitullah! |
+## Naskah per scene (satu file audio per scene)
+
+| File | Scene | Narasi |
+|------|-------|--------|
+| `01-opening` | Opening | Baru pertama kali mau umroh? Sebelum berangkat ke Tanah Suci, yuk kenali lima rukun umroh yang wajib kita pahami! |
+| `02-fivePillars` | Pengenalan | Rukun adalah bagian pokok ibadah. Jika salah satunya tidak dilaksanakan, umroh belum sah. |
+| `03-ihram` | Ihram | Pertama, ihram. Yaitu berniat masuk ke dalam ibadah umroh, dengan memperhatikan ketentuan miqat. |
+| `04-tawaf` | Tawaf | Kedua, tawaf. Mengelilingi Ka'bah tujuh putaran, dimulai dari arah Hajar Aswad, dengan Ka'bah selalu di sebelah kiri. |
+| `05-sai` | Sa'i | Ketiga, sa'i. Berjalan tujuh lintasan antara Safa dan Marwah. Dimulai dari Safa, dan berakhir di Marwah. |
+| `06-tahallul` | Tahallul | Keempat, tahallul. Mencukur atau memotong rambut sesuai ketentuan. |
+| `07-tertib` | Tertib | Kelima, tertib. Semua rukun dilaksanakan sesuai urutannya. |
+| `08-outro` | Closing | Yuk, belajar umroh bersama Mudahkebaitullah! |
+
+Pengucapan: *Ka'bah* = "Kakbah", *sa'i* = "sa-i", *Mudahkebaitullah* = "Mudah ke Baitullah". Untuk TTS, koreksi ini otomatis diterapkan lewat `TTS_LEXICON`.
+
+## Alur kerja voice-over
+
+### A. TTS (otomatis)
+1. Set salah satu kredensial berikut sebagai environment variable/secret:
+   - **Google Cloud TTS**: `GOOGLE_TTS_API_KEY`. Suara default `id-ID-Wavenet-B` (pria). Timing frasa diambil persis dari SSML mark. Daftar suara: `npm run vo:synth -- --list-voices`.
+   - **Azure Speech**: `AZURE_SPEECH_KEY` + `AZURE_SPEECH_REGION`. Suara default `id-ID-ArdiNeural` (pria).
+   - **ElevenLabs**: `ELEVENLABS_API_KEY` + `ELEVENLABS_VOICE_ID` (pilih suara pria Indonesia dewasa). Timing frasa diambil dari alignment karakter.
+2. Pastikan host provider diizinkan oleh network policy environment.
+3. `npm run vo:synth`. Perintah ini membuat 8 file di `public/assets/audio/episode-01/vo/` lalu langsung mengukurnya.
+   Opsi: `TTS_VOICE=…`, `TTS_RATE=1.0` (0,9–1,1), `--only tawaf`.
+4. **Dengarkan semua klip.** Cek karakter suara dan pengucapan istilah Arab.
+
+### B. Rekaman manual
+1. Rekam setiap baris sebagai file terpisah, beri nama persis seperti kolom *File* di atas (`.wav`/`.mp3`/`.m4a`/`.flac`). Simpan di `public/assets/audio/episode-01/vo/`.
+2. Potong hening di awal/akhir file hingga sekitar 0,1 detik. Jeda antar-scene sudah ditambahkan otomatis.
+3. `npm run vo:measure`.
+4. (Opsional, supaya subtitle lebih presisi) tulis waktu mulai setiap frasa, dalam detik dari awal klip, di `vo/phrase-marks.json`:
+   `{ "scenes": { "tawaf": [0.0, 1.4, 3.6, 5.5] } }`, lalu jalankan `npm run vo:measure` lagi.
+
+### Setelah audio siap
+```bash
+npm run vo:export      # narration.timeline.json + out/episode-01.id.srt
+npm run render:ep01    # MP4
+npm run validate:ep01  # validasi video, audio & sinkronisasi
+```
+
+Jika total durasi melebihi 60 detik, `vo:measure` akan melaporkannya. Tidak ada kata atau kalimat yang dipotong. Saran yang diberikan berupa tempo sedikit lebih cepat (≤ 1,10×) atau daftar kalimat yang bisa dipersingkat.
+
+## Sinkronisasi animasi (otomatis dari timing frasa)
+| Ucapan | Visual |
+|---|---|
+| "…yuk kenali lima rukun umroh" | Pill "Kenali 5 Rukunnya!" muncul |
+| "Rukun adalah bagian pokok ibadah" / "…umroh belum sah" | Legend Rukun/Wajib/Sunnah muncul, lalu kartu RUKUN berdenyut |
+| "Pertama, ihram" | Jamaah pria & wanita masuk di miqat |
+| "Yaitu berniat…" | Label **NIAT UMROH** + lafaz talbiyah |
+| "…ketentuan miqat" | Catatan: miqat = wajib umroh, bukan rukun |
+| "Mengelilingi Ka'bah tujuh putaran" | Jalan tawaf mulai, 7 putaran berlawanan arah jarum jam |
+| "…dari arah Hajar Aswad" | Sudut Hajar Aswad & garis mulai disorot |
+| "…selalu di sebelah kiri" | Catatan arah: Ka'bah di kiri |
+| "Berjalan tujuh lintasan" | 7 lintasan Safa ⇄ Marwah dimulai (Safa → Marwah = 1 lintasan) |
+| "Dimulai dari Safa" / "berakhir di Marwah" | Bukit Safa lalu Marwah disorot |
+| "Mencukur atau memotong rambut" | Gunting mulai memotong |
+| "sesuai ketentuan" | Ketentuan laki-laki / perempuan |
+| "Kelima, tertib" / "Semua rukun…" | Node TERTIB disorot, lalu urutan Ihram → Tawaf → Sa'i → Tahallul |
 
 ## Catatan akurasi (untuk reviewer/ustadz)
-
-Kerangka lima rukun di sini mengikuti yang umum diajarkan di Indonesia (mazhab Syafi'i): ihram (niat), tawaf, sa'i, tahallul (mencukur/memotong rambut), tertib.
-
-Teks di layar membedakan tiga hal ini:
-- **Rukun**: tidak boleh ditinggalkan. Tanpanya umroh tidak sah, dan tidak bisa diganti dengan dam.
-- **Wajib umroh**: memulai ihram dari miqat dan menjauhi larangan ihram. Bila ditinggalkan, umroh tetap sah tetapi wajib membayar dam. Adegan 3 menyebut secara eksplisit bahwa miqat termasuk *wajib*, bukan rukun.
-- **Sunnah**: dianjurkan dan berpahala, tidak wajib.
-
-Pilihan visual yang perlu diketahui reviewer:
-- **Tawaf**: berlawanan arah jarum jam dilihat dari atas, Ka'bah di sebelah kiri. Mulai dan selesai di garis Hajar Aswad (sudut timur). Pintu ada di sisi timur laut, Hijr Ismail di sisi barat laut, dan Hijr Ismail berada *di dalam* lintasan tawaf. Ketujuh putaran digambar sebagai spiral supaya semuanya terlihat.
-- **Sa'i**: digambar sebagai diagram skematik (bukan peta). Safa → Marwah dihitung 1 lintasan. Pulang-pergi dihitung 2 lintasan. Lintasan ke-7 berakhir di Marwah.
-- **Ihram**: talbiyah niat "Labbaika Allāhumma ‘umratan" ditampilkan sebagai lafaz niat. Niat letaknya di hati.
-- **Tahallul**: laki-laki mencukur habis atau memendekkan rambut. Perempuan cukup memotong ujung rambut. (Dalam mazhab Syafi'i, minimal tiga helai; ini **tidak** ditampilkan di layar, silakan ditambahkan di episode berikutnya kalau diinginkan.)
-- **Pakaian ihram laki-laki**: dua kain tanpa jahitan, kedua bahu tertutup (bahu kanan terbuka/idtiba' hanya sunnah saat tawaf, jadi tidak ditampilkan). **Perempuan**: wajah dan telapak tangan terbuka.
-
-Mohon materi ini ditinjau oleh pembimbing/ustadz sebelum dipublikasikan.
-
-## Alur kerja narasi
-1. Rekam atau sintesis VO sebagai **satu file 60 detik** yang dimulai di 00:00, dengan mengikuti timing di atas. Pakai `out/episode-01.id.srt` sebagai panduan cue (`npm run srt`).
-2. Simpan file di `public/assets/audio/episode-01/narration.wav`.
-3. Isi `narration` di `src/episodes/episode-01/audio.config.ts` dengan path tersebut.
-4. (Opsional) Isi `music` dengan musik berlisensi. Volumenya otomatis diturunkan (ducking) saat ada narasi.
-5. Kalau timing rekaman berbeda, sesuaikan `start`/`end` di `narration.ts`, lalu render ulang.
+- Kerangka lima rukun mengikuti yang umum diajarkan di Indonesia (mazhab Syafi'i).
+- Video membedakan rukun, wajib, dan sunnah. Memulai ihram dari miqat adalah **wajib** umroh, bukan rukun.
+- Tawaf berlawanan arah jarum jam dilihat dari atas, Ka'bah di kiri, dimulai dari garis Hajar Aswad (sudut timur). Hijr Ismail berada di dalam lintasan.
+- Sa'i: Safa → Marwah = 1 lintasan, lintasan ke-7 berakhir di Marwah (diagram skematik, bukan peta).
+- Tahallul: laki-laki mencukur habis atau memendekkan rambut, perempuan memotong ujung rambut.
+- Mohon ditinjau oleh pembimbing/ustadz sebelum dipublikasikan.

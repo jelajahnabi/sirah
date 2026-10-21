@@ -1,101 +1,130 @@
 /**
- * Episode 01 narration — single source of truth for subtitles,
- * the SRT export and the voice-over recording timeline.
+ * Episode 01 narration — single source of truth for the voice-over script,
+ * subtitles, TTS input and the exported timing JSON.
  *
- * Times are in seconds on the episode timeline. Each `lines` entry becomes
- * one subtitle card. Edit text/timing here; the video and SRT follow.
+ * - `phrases` are the subtitle cards, in spoken order. Joined, they must equal `text`.
+ *   Wrap key words in *asterisks* to render them in gold.
+ * - TTS engines receive the text through TTS_LEXICON (pronunciation fixes), never the display text.
+ * - `estimatedSec` is used for layout until a real voice-over file has been measured.
+ *
+ * Timing is NOT stored here: it is computed from the measured audio in
+ * voiceover.manifest.json (see timeline.ts).
  */
-export type NarrationLine = { start: number; end: number; text: string };
-export type NarrationSegment = {
-  scene: string;
-  start: number;
-  end: number;
+export type SceneKey = "opening" | "fivePillars" | "ihram" | "tawaf" | "sai" | "tahallul" | "tertib" | "outro";
+
+export type NarrationScene = {
+  key: SceneKey;
+  order: number;
+  title: string;
   text: string;
-  lines: NarrationLine[];
+  phrases: string[];
+  estimatedSec: number;
 };
 
-export const NARRATION: NarrationSegment[] = [
+export const VOICE_BRIEF =
+  "Pria Indonesia dewasa (30–40 th), hangat, bersahabat, tenang, artikulasi jelas; gaya pembimbing manasik profesional, " +
+  "tidak terlalu formal, bukan gaya pembaca berita, tidak dramatis; tempo natural untuk pemula.";
+
+export const NARRATION: NarrationScene[] = [
   {
-    scene: "01 Pembuka",
-    start: 0.4,
-    end: 7.6,
-    text: "Baru pertama kali mau umroh? Ada lima rukun yang wajib kamu pahami sebelum berangkat!",
-    lines: [
-      { start: 0.4, end: 2.9, text: "Baru pertama kali mau umroh?" },
-      { start: 3.0, end: 5.6, text: "Ada lima rukun yang wajib kamu pahami" },
-      { start: 5.6, end: 7.6, text: "sebelum berangkat!" },
-    ],
+    key: "opening",
+    order: 1,
+    title: "Opening",
+    text: "Baru pertama kali mau umroh? Sebelum berangkat ke Tanah Suci, yuk kenali lima rukun umroh yang wajib kita pahami!",
+    phrases: ["Baru pertama kali mau *umroh*?", "Sebelum berangkat ke *Tanah Suci*,", "yuk kenali *lima rukun umroh*", "yang wajib kita pahami!"],
+    estimatedSec: 7.2,
   },
   {
-    scene: "02 Lima Rukun",
-    start: 8.4,
-    end: 15.4,
-    text: "Inilah lima rukun umroh yang harus dilaksanakan agar ibadah kita sah.",
-    lines: [
-      { start: 8.4, end: 11.6, text: "Inilah lima rukun umroh" },
-      { start: 11.6, end: 15.4, text: "yang harus dilaksanakan agar ibadah kita sah." },
-    ],
+    key: "fivePillars",
+    order: 2,
+    title: "Pengenalan",
+    text: "Rukun adalah bagian pokok ibadah. Jika salah satunya tidak dilaksanakan, umroh belum sah.",
+    phrases: ["*Rukun* adalah bagian pokok ibadah.", "Jika salah satunya tidak dilaksanakan,", "umroh *belum sah*."],
+    estimatedSec: 5.8,
   },
   {
-    scene: "03 Ihram",
-    start: 16.4,
-    end: 24.4,
+    key: "ihram",
+    order: 3,
+    title: "Ihram",
     text: "Pertama, ihram. Yaitu berniat masuk ke dalam ibadah umroh, dengan memperhatikan ketentuan miqat.",
-    lines: [
-      { start: 16.4, end: 18.2, text: "Pertama, ihram." },
-      { start: 18.2, end: 21.4, text: "Yaitu berniat masuk ke dalam ibadah umroh," },
-      { start: 21.4, end: 24.4, text: "dengan memperhatikan ketentuan miqat." },
-    ],
+    phrases: ["Pertama, *IHRAM*.", "Yaitu *berniat* masuk ke dalam ibadah umroh,", "dengan memperhatikan ketentuan *miqat*."],
+    estimatedSec: 6.4,
   },
   {
-    scene: "04 Tawaf",
-    start: 25.4,
-    end: 34.2,
-    text: "Kedua, tawaf. Mengelilingi Ka'bah sebanyak tujuh putaran, dengan Ka'bah berada di sebelah kiri.",
-    lines: [
-      { start: 25.4, end: 27.2, text: "Kedua, tawaf." },
-      { start: 27.2, end: 30.6, text: "Mengelilingi Ka'bah sebanyak tujuh putaran," },
-      { start: 30.6, end: 34.2, text: "dengan Ka'bah berada di sebelah kiri." },
-    ],
+    key: "tawaf",
+    order: 4,
+    title: "Tawaf",
+    text: "Kedua, tawaf. Mengelilingi Ka'bah tujuh putaran, dimulai dari arah Hajar Aswad, dengan Ka'bah selalu di sebelah kiri.",
+    phrases: ["Kedua, *TAWAF*.", "Mengelilingi Ka'bah *tujuh putaran*,", "dimulai dari arah *Hajar Aswad*,", "dengan Ka'bah selalu di sebelah *kiri*."],
+    estimatedSec: 7.8,
   },
   {
-    scene: "05 Sa'i",
-    start: 35.4,
-    end: 43.6,
-    text: "Ketiga, sa'i. Berjalan tujuh lintasan antara Safa dan Marwah. Dimulai dari Safa dan berakhir di Marwah.",
-    lines: [
-      { start: 35.4, end: 37.0, text: "Ketiga, sa'i." },
-      { start: 37.0, end: 40.2, text: "Berjalan tujuh lintasan antara Safa dan Marwah." },
-      { start: 40.2, end: 43.6, text: "Dimulai dari Safa dan berakhir di Marwah." },
-    ],
+    key: "sai",
+    order: 5,
+    title: "Sa'i",
+    text: "Ketiga, sa'i. Berjalan tujuh lintasan antara Safa dan Marwah. Dimulai dari Safa, dan berakhir di Marwah.",
+    phrases: ["Ketiga, *SA'I*.", "Berjalan *tujuh lintasan*", "antara *Safa* dan *Marwah*.", "Dimulai dari *Safa*,", "dan berakhir di *Marwah*."],
+    estimatedSec: 7.0,
   },
   {
-    scene: "06 Tahallul",
-    start: 44.4,
-    end: 50.6,
-    text: "Keempat, tahallul, dengan mencukur atau memotong rambut sesuai ketentuannya.",
-    lines: [
-      { start: 44.4, end: 46.4, text: "Keempat, tahallul," },
-      { start: 46.4, end: 50.6, text: "dengan mencukur atau memotong rambut sesuai ketentuannya." },
-    ],
+    key: "tahallul",
+    order: 6,
+    title: "Tahallul",
+    text: "Keempat, tahallul. Mencukur atau memotong rambut sesuai ketentuan.",
+    phrases: ["Keempat, *TAHALLUL*.", "Mencukur atau *memotong rambut*", "sesuai ketentuan."],
+    estimatedSec: 4.4,
   },
   {
-    scene: "07 Tertib",
-    start: 51.3,
-    end: 55.8,
-    text: "Kelima, tertib. Melaksanakan rukun-rukun tersebut sesuai urutannya.",
-    lines: [
-      { start: 51.3, end: 52.9, text: "Kelima, tertib." },
-      { start: 52.9, end: 55.8, text: "Melaksanakan rukun-rukun tersebut sesuai urutannya." },
-    ],
+    key: "tertib",
+    order: 7,
+    title: "Tertib",
+    text: "Kelima, tertib. Semua rukun dilaksanakan sesuai urutannya.",
+    phrases: ["Kelima, *TERTIB*.", "Semua rukun dilaksanakan", "*sesuai urutannya*."],
+    estimatedSec: 4.0,
   },
   {
-    scene: "08 Penutup",
-    start: 56.3,
-    end: 59.4,
+    key: "outro",
+    order: 8,
+    title: "Closing",
     text: "Yuk, belajar umroh bersama Mudahkebaitullah!",
-    lines: [{ start: 56.3, end: 59.4, text: "Yuk, belajar umroh bersama Mudahkebaitullah!" }],
+    phrases: ["Yuk, belajar umroh bersama", "*Mudahkebaitullah*!"],
+    estimatedSec: 2.8,
   },
 ];
 
-export const SUBTITLE_LINES: NarrationLine[] = NARRATION.flatMap((s) => s.lines);
+/** Removes the *highlight* markers. */
+export const plain = (s: string) => s.replace(/\*/g, "");
+
+export const narrationByKey = (key: SceneKey) => {
+  const n = NARRATION.find((x) => x.key === key);
+  if (!n) throw new Error(`No narration for ${key}`);
+  return n;
+};
+
+/** Pronunciation fixes applied only to text sent to TTS (display text keeps the proper spelling). */
+export const TTS_LEXICON: [RegExp, string][] = [
+  [/Ka'bah/g, "Kakbah"],
+  [/\bsa'i\b/gi, "sai"],
+  [/Mudahkebaitullah/g, "Mudah ke Baitullah"],
+];
+
+export const toTts = (s: string) => TTS_LEXICON.reduce((acc, [re, rep]) => acc.replace(re, rep), s);
+
+/**
+ * Splits a scene's spoken `text` into slices aligned with its subtitle phrases
+ * (original casing, trailing spaces kept). Throws if the phrases don't match the text.
+ */
+export const phraseSlices = (n: NarrationScene) => {
+  const lower = n.text.toLowerCase();
+  let cursor = 0;
+  const starts = n.phrases.map((p) => {
+    const idx = lower.indexOf(plain(p).toLowerCase(), cursor);
+    if (idx < 0 || lower.slice(cursor, idx).trim() !== "") {
+      throw new Error(`[${n.key}] phrase not found in order: "${plain(p)}"`);
+    }
+    cursor = idx + plain(p).length;
+    return idx;
+  });
+  if (n.text.slice(cursor).trim() !== "") throw new Error(`[${n.key}] text has words not covered by phrases`);
+  return starts.map((st, i) => n.text.slice(st, i < starts.length - 1 ? starts[i + 1] : n.text.length));
+};
